@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Võ Thành Phát | Portfolio 2025</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --miku: #39c5bb; --miku-glow: rgba(57, 197, 187, 0.4); }
+        body { font-family: 'Lexend', sans-serif; background-color: #050a09; color: #e6f7f6; overflow-x: hidden; }
+        .miku-text { color: var(--miku); text-shadow: 0 0 10px var(--miku-glow); }
+        
+        /* Giữ tên không xuống dòng */
+        .no-wrap { white-space: nowrap; }
+
+        .glass-card { 
+            background: rgba(57, 197, 187, 0.03); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(57, 197, 187, 0.1);
+            transition: all 0.3s ease;
+        }
+        .avatar-frame {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            border: 3px solid var(--miku);
+            box-shadow: 0 0 25px var(--miku-glow);
+            overflow: hidden;
+            background: #111;
+            margin-bottom: 2rem;
+        }
+        .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .timeline-dot { width: 12px; height: 12px; background: var(--miku); border-radius: 50%; position: absolute; left: -31px; top: 8px; }
+    </style>
+</head>
+<body class="scroll-smooth">
+
+    <nav class="fixed w-full z-50 py-4 px-6 md:px-10 flex justify-between items-center bg-[#050a09]/90 backdrop-blur-md border-b border-[#39c5bb]/10">
+        <div class="text-lg font-black miku-text uppercase italic no-wrap">VTP Design</div>
+        <div class="flex space-x-4 md:space-x-6 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
+            <a href="#home" class="hover:miku-text transition">Trang chủ</a>
+            <a href="#experience" class="hover:miku-text transition">Kinh nghiệm</a>
+            <a href="#contact" class="miku-text border border-[#39c5bb]/30 px-3 py-1 rounded-full">Liên hệ</a>
+        </div>
+    </nav>
+
+    <section id="home" class="min-h-screen flex flex-col justify-center items-center text-center px-4 pt-20">
+        <div class="avatar-frame">
+            <img src="avt.JPG" alt="Võ Thành Phát" onerror="this.style.display='none'; this.parentNode.innerHTML+='<p style=\'font-size:10px; padding:70px 0\'>LỖI FILE ẢNH</p>'">
+        </div>
+
+        <h2 class="text-[10px] font-bold tracking-[0.4em] mb-4 text-gray-500 uppercase italic">Creative Designer / Content Creator</h2>
+        
+        <h1 class="text-4xl md:text-7xl font-black mb-6 leading-none uppercase no-wrap">
+            VÕ THÀNH <span class="miku-text italic">PHÁT</span>
+        </h1>
+
+        <p class="max-w-md text-gray-400 mb-8 italic text-xs md:text-sm leading-relaxed">
+            "Người cầu toàn trong thiết kế, ngăn nắp trong tư duy. <br>
+            Sưu tầm những giá trị vượt thời gian."
+        </p>
+    </section>
+
+    <section id="experience" class="py-24 px-6 max-w-4xl mx-auto border-t border-[#39c5bb]/10">
+        <h2 class="text-2xl font-black mb-16 miku-text uppercase italic">Lịch sử công việc</h2>
+        
+        <div class="relative border-l-2 border-[#39c5bb]/20 ml-4 space-y-12">
+            
+            <div class="relative pl-8">
+                <div class="timeline-dot"></div>
+                <div class="flex flex-col md:flex-row md:justify-between items-start mb-2">
+                    <h4 class="text-lg font-bold text-gray-100 uppercase">Merjea_Somewhere-in-town</h4>
+                    <span class="text-[10px] miku-text font-mono font-bold bg-[#39c5bb]/10 px-3 py-1 rounded-full">2025 - Hiện tại</span>
+                </div>
+                <p class="text-emerald-500/80 text-[10px] font-bold mb-3 uppercase tracking-widest">Media & Content Creator</p>
+                <p class="text-gray-500 text-xs leading-relaxed">Xây dựng hình ảnh, quay dựng video và phát triển nội dung số cho quán cafe.</p>
+            </div>
+
+            <div class="relative pl-8">
+                <div class="timeline-dot"></div>
+                <div class="flex flex-col md:flex-row md:justify-between items-start mb-2">
+                    <h4 class="text-lg font-bold text-gray-100 uppercase">Toku Friends Fansub</h4>
+                    <span class="text-[10px] miku-text font-mono font-bold bg-[#39c5bb]/10 px-3 py-1 rounded-full">2025 - Hiện tại</span>
+                </div>
+                <p class="text-emerald-500/80 text-[10px] font-bold mb-3 uppercase tracking-widest">Graphic Designer</p>
+                <p class="text-gray-500 text-xs leading-relaxed">Thiết kế ấn phẩm truyền thông xã hội cho cộng đồng Tokusatsu.</p>
+            </div>
+
+            <div class="relative pl-8">
+                <div class="timeline-dot"></div>
+                <div class="flex flex-col md:flex-row md:justify-between items-start mb-2">
+                    <h4 class="text-lg font-bold text-gray-100 uppercase italic">Bắp Rang Bơ Media</h4>
+                    <span class="text-[10px] miku-text font-mono font-bold bg-[#39c5bb]/10 px-3 py-1 rounded-full">2024 - 2025</span>
+                </div>
+                <p class="text-emerald-500/80 text-[10px] font-bold mb-3 uppercase tracking-widest">Video Editor & Media Manager</p>
+                <p class="text-gray-500 text-xs leading-relaxed">Quản lý hậu kỳ cho kênh Youtube 23.7K người đăng ký.</p>
+            </div>
+
+            <div class="relative pl-8">
+                <div class="timeline-dot"></div>
+                <div class="flex flex-col md:flex-row md:justify-between items-start mb-2">
+                    <h4 class="text-lg font-bold text-gray-100 uppercase italic">Golden Rooster Collection</h4>
+                    <span class="text-[10px] miku-text font-mono font-bold bg-[#39c5bb]/10 px-3 py-1 rounded-full">2024 - 2025</span>
+                </div>
+                <p class="text-emerald-500/80 text-[10px] font-bold mb-3 uppercase tracking-widest">Media & Content Creator</p>
+                <p class="text-gray-500 text-xs leading-relaxed">Sáng tạo nội dung TikTok (356.1K Follower) và YouTube (65.6K Subscriber).</p>
+            </div>
+
+            <div class="relative pl-8">
+                <div class="timeline-dot"></div>
+                <div class="flex flex-col md:flex-row md:justify-between items-start mb-2">
+                    <h4 class="text-lg font-bold text-gray-100 uppercase">Gaoogao.com</h4>
+                    <span class="text-[10px] miku-text font-mono font-bold bg-[#39c5bb]/10 px-3 py-1 rounded-full">2022 - 2024</span>
+                </div>
+                <p class="text-emerald-500/80 text-[10px] font-bold mb-3 uppercase tracking-widest">Media Staff & Branding</p>
+                <p class="text-gray-500 text-xs leading-relaxed">Thiết kế bao bì, ấn phẩm in ấn và hình ảnh thương hiệu cửa hàng.</p>
+            </div>
+
+        </div>
+    </section>
+
+    <footer id="contact" class="py-20 text-center border-t border-[#39c5bb]/10 mt-10">
+        <h3 class="text-xl font-black mb-6 miku-text uppercase tracking-widest italic">Let's work together</h3>
+        <div class="space-y-2 mb-10">
+            <p class="text-lg font-bold">phatvo.0401@gmail.com</p>
+            <p class="text-gray-500 text-[10px]">0384 772 414 | CỦ CHI, TP. HỒ CHÍ MINH</p>
+        </div>
+        <div class="text-[8px] tracking-[0.5em] text-gray-800 uppercase">© 2025 Võ Thành Phát Portfolio</div>
+    </footer>
+
+</body>
+</html>
