@@ -161,11 +161,22 @@
         const obs = new IntersectionObserver((es) => { es.forEach(e => { if (e.isIntersecting) e.target.classList.add('active'); }); }, { threshold: 0.1 });
         document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-        const EXT = ".JPG.jpg";
-        const ASSETS = ["Tạp Chí_00102"];
-        for (let i = 0; i <= 101; i++) ASSETS.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
-        ASSETS.push("Tạp Chí_00103");
+        const EXT = ".JPG.jpg"; // Đảm bảo EXT khớp với đuôi file thực tế trên GitHub
+const ASSETS = [];
 
+// 1. Trang bìa (Tờ 1 - mặt trước)
+ASSETS.push("Tạp Chí_00102"); 
+
+// 2. Trang trắng mới bổ sung (Tờ 1 - mặt sau)
+ASSETS.push("Tạp Chí_00000"); 
+
+// 3. Các trang nội dung từ 00001 đến 00101
+for (let i = 1; i <= 101; i++) {
+    ASSETS.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
+}
+
+// 4. Trang bìa sau cuối cùng
+ASSETS.push("Tạp Chí_00103");
         const book = document.getElementById('book');
         const sheets = [];
         let currentIndex = 0;
@@ -291,4 +302,5 @@
     </script>
 </body>
 </html>
+
 
