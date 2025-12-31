@@ -37,7 +37,7 @@
         .back { transform: rotateY(180deg); z-index: 1; }
         .flipped { transform: rotateY(-180deg); }
 
-        /* MOBILE: Trang đơn tĩnh như đã chốt */
+        /* MOBILE: Trang đơn tĩnh */
         @media (max-width: 767px) {
             .book-wrapper { perspective: none; }
             .book { width: 90vw; height: 125vw; transform: none !important; transform-style: flat; }
@@ -52,11 +52,9 @@
 
         /* --- UI COMPONENTS (KHÔI PHỤC 100%) --- */
         .nav-link { transition: all 0.3s ease; padding: 6px 20px; border-radius: 9999px; border: 1px solid rgba(57, 197, 187, 0.6); color: #ffffff; background: rgba(57, 197, 187, 0.15); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: none !important; }
-        .nav-link:hover { border-color: var(--violet); box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
         .btn-mag { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--miku); padding: 12px 20px; border-radius: 8px; font-size: 9px; font-weight: 900; letter-spacing: 1.5px; transition: 0.3s; cursor: none !important; text-transform: uppercase; }
         .btn-mag:hover { border-color: var(--violet); color: white; box-shadow: 0 0 15px var(--violet); }
         .social-link { transition: all 0.3s ease; color: #94a3b8; cursor: none !important; }
-        .social-link:hover { color: var(--miku); transform: translateY(-2px); }
         .reveal { opacity: 0; transform: translateY(30px); transition: 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
     </style>
@@ -133,30 +131,26 @@
     </main>
 
     <script>
-        // Đồng hồ
         function updateClock() { document.getElementById('digital-clock').innerText = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }).toUpperCase(); }
         setInterval(updateClock, 1000); updateClock();
 
-        // Con trỏ ảo PC
         const cursor = document.getElementById('cursor-follower');
-        document.addEventListener('mousemove', (e) => { 
-            cursor.style.left = e.clientX + 'px'; 
-            cursor.style.top = e.clientY + 'px'; 
-        });
+        document.addEventListener('mousemove', (e) => { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; });
 
-        // Loader % Gốc
         let lp = 0; const li = setInterval(() => { 
             lp += 5; document.getElementById('loader-progress').style.width=lp+'%'; 
             document.getElementById('loader-num').innerText=lp.toString().padStart(2,'0'); 
             if(lp>=100){clearInterval(li); setTimeout(()=>document.getElementById('loader').classList.add('hidden'),500);} 
         }, 40);
 
-        // Assets
         const EXT = ".JPG.jpg";
         const isMobile = window.innerWidth < 768;
-        const RAW_ASSETS = ["Tạp Chí_00102", "BLANK"]; // Bìa + trắng
-        for(let i=1; i<=101; i++) RAW_ASSETS.push(`Tạp Chí_${String(i).padStart(5,'0')}`);
-        RAW_ASSETS.push("Tạp Chí_00103");
+        
+        // Cấu hình ảnh
+        const BIA = "Tạp Chí_00102";
+        const TRANG_CUOI = "Tạp Chí_00103";
+        const NOIDUNG = [];
+        for(let i=1; i<=101; i++) NOIDUNG.push(`Tạp Chí_${String(i).padStart(5,'0')}`);
 
         const book = document.getElementById('book');
         const sheets = [];
@@ -165,31 +159,36 @@
 
         function createBook() {
             if (isMobile) {
-                // MOBILE: Trang đơn tĩnh
-                RAW_ASSETS.forEach((asset, i) => {
+                // MOBILE: Bìa -> Trang 1 luôn (Bỏ qua trắng)
+                const mobileAssets = [BIA, ...NOIDUNG, TRANG_CUOI];
+                mobileAssets.forEach((asset, i) => {
                     const page = document.createElement('div');
                     page.className = 'page' + (i === 0 ? ' active-mobile' : '');
                     const front = document.createElement('div');
                     front.className = 'front' + (asset === "BLANK" ? " blank-page" : "");
-                    if (asset !== "BLANK") { const img = new Image(); img.src = asset + EXT; front.appendChild(img); }
+                    const img = new Image(); img.src = asset + EXT; front.appendChild(img);
                     page.appendChild(front);
                     book.appendChild(page);
                     sheets.push(page);
                 });
             } else {
-                // PC: Trang đôi lật 3D
-                for (let i = 0; i < RAW_ASSETS.length; i += 2) {
+                // PC: Bìa -> Trang Trắng -> Nội dung (Giữ nguyên cấu trúc spread)
+                const pcAssets = [BIA, "BLANK", ...NOIDUNG, TRANG_CUOI];
+                for (let i = 0; i < pcAssets.length; i += 2) {
                     const sheet = document.createElement('div');
                     sheet.className = 'page';
-                    const baseZ = Math.floor((RAW_ASSETS.length - i) / 2);
+                    const baseZ = Math.floor((pcAssets.length - i) / 2);
                     sheet.style.zIndex = baseZ; sheet.dataset.baseZ = baseZ;
+                    
                     const front = document.createElement('div');
-                    front.className = 'front' + (RAW_ASSETS[i] === "BLANK" ? " blank-page" : "");
-                    if (RAW_ASSETS[i] !== "BLANK") { const img = new Image(); img.src = RAW_ASSETS[i] + EXT; front.appendChild(img); }
+                    front.className = 'front' + (pcAssets[i] === "BLANK" ? " blank-page" : "");
+                    if(pcAssets[i] !== "BLANK") { const img = new Image(); img.src = pcAssets[i] + EXT; front.appendChild(img); }
+                    
                     const back = document.createElement('div');
-                    const bImg = RAW_ASSETS[i+1];
-                    back.className = 'back' + (bImg === "BLANK" ? " blank-page" : "");
-                    if (bImg && bImg !== "BLANK") { const img = new Image(); img.src = bImg + EXT; back.appendChild(img); }
+                    const bImg = pcAssets[i+1];
+                    back.className = 'back' + (bImg === "BLANK" || !bImg ? " blank-page" : "");
+                    if(bImg && bImg !== "BLANK") { const img = new Image(); img.src = bImg + EXT; back.appendChild(img); }
+                    
                     sheet.appendChild(front); sheet.appendChild(back);
                     book.appendChild(sheet); sheets.push(sheet);
                 }
@@ -207,30 +206,23 @@
         }
 
         function next() {
-            if (isMobile && currentIndex < sheets.length - 1) { 
-                currentIndex++; updateUI(); 
-            } else if (!isMobile && currentIndex < sheets.length && !isAnimating) {
-                isAnimating = true; 
-                const s = sheets[currentIndex];
-                s.classList.add('flipped');
+            if (isMobile && currentIndex < sheets.length - 1) { currentIndex++; updateUI(); }
+            else if (!isMobile && currentIndex < sheets.length && !isAnimating) {
+                isAnimating = true; const s = sheets[currentIndex]; s.classList.add('flipped');
                 setTimeout(() => { s.style.zIndex = currentIndex + 100; isAnimating = false; }, 400);
                 currentIndex++; updateUI();
             }
         }
 
         function prev() {
-            if (isMobile && currentIndex > 0) { 
-                currentIndex--; updateUI(); 
-            } else if (!isMobile && currentIndex > 0 && !isAnimating) {
-                isAnimating = true; currentIndex--;
-                const s = sheets[currentIndex];
-                s.classList.remove('flipped');
+            if (isMobile && currentIndex > 0) { currentIndex--; updateUI(); }
+            else if (!isMobile && currentIndex > 0 && !isAnimating) {
+                isAnimating = true; currentIndex--; const s = sheets[currentIndex]; s.classList.remove('flipped');
                 setTimeout(() => { s.style.zIndex = s.dataset.baseZ; isAnimating = false; }, 400);
                 updateUI();
             }
         }
 
-        // Điều khiển
         const bind = (id, fn) => {
             const el = document.getElementById(id);
             el.onclick = (e) => { e.preventDefault(); fn(); };
@@ -238,26 +230,17 @@
         };
         bind('nextBtn', next); bind('prevBtn', prev);
         bind('firstBtn', () => { 
-            if(isMobile) { currentIndex = 0; } else {
-                sheets.forEach(s => { s.classList.remove('flipped'); s.style.zIndex = s.dataset.baseZ; });
-                currentIndex = 0;
-            }
+            if(isMobile) currentIndex = 0; 
+            else { sheets.forEach(s => { s.classList.remove('flipped'); s.style.zIndex = s.dataset.baseZ; }); currentIndex = 0; }
             updateUI(); 
         });
         bind('lastBtn', () => { 
-            if(isMobile) { currentIndex = sheets.length - 1; } else {
-                sheets.forEach((s, i) => { s.classList.add('flipped'); s.style.zIndex = i + 100; });
-                currentIndex = sheets.length;
-            }
+            if(isMobile) currentIndex = sheets.length - 1; 
+            else { sheets.forEach((s, i) => { s.classList.add('flipped'); s.style.zIndex = i + 100; }); currentIndex = sheets.length; }
             updateUI(); 
         });
 
-        // Phím tắt PC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === "ArrowRight") next();
-            if (e.key === "ArrowLeft") prev();
-        });
-
+        document.addEventListener('keydown', (e) => { if (e.key === "ArrowRight") next(); if (e.key === "ArrowLeft") prev(); });
         const obs = new IntersectionObserver((es) => { es.forEach(e => { if (e.isIntersecting) e.target.classList.add('active'); }); }, { threshold: 0.1 });
         document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
