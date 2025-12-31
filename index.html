@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --miku: #39c5bb; --violet: #8b5cf6; --glass: rgba(255, 255, 255, 0.03); --border: rgba(57, 197, 187, 0.2); }
+        :root { --miku: #39c5bb; --violet: #8b5cf6; --pink: #ff007f; --glass: rgba(255, 255, 255, 0.03); --border: rgba(57, 197, 187, 0.2); }
         
         body { 
             font-family: 'Lexend', sans-serif; background-color: #050a09; 
@@ -20,8 +20,8 @@
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050a09; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         #loader.hidden { opacity: 0; pointer-events: none; visibility: hidden; }
         .loader-bar-container { width: 150px; height: 2px; background: rgba(255, 255, 255, 0.05); position: relative; overflow: hidden; border-radius: 2px; }
-        #loader-progress { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: linear-gradient(90deg, var(--miku), var(--violet)); transition: width 0.2s ease; }
-        .loader-percentage { font-family: monospace; font-size: 5rem; font-weight: 900; color: var(--miku); opacity: 0.3; position: absolute; bottom: 5%; right: 5%; line-height: 1; }
+        #loader-progress { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: linear-gradient(90deg, var(--miku), var(--pink));; transition: width 0.2s ease; }
+        .loader-percentage { font-family: monospace; font-size: 5rem; font-weight: 900; color: var(--pink); opacity: 0.3; position: absolute; bottom: 5%; right: 5%; line-height: 1; }
 
         /* --- CURSOR (PHỤC HỒI CHO PC) --- */
         #cursor-follower { width: 20px; height: 20px; border: 2px solid var(--miku); border-radius: 50%; position: fixed; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); background: linear-gradient(45deg, rgba(57, 197, 187, 0.2), rgba(139, 92, 246, 0.2)); transition: transform 0.08s ease-out; display: block; }
@@ -52,7 +52,7 @@
 
         /* Trạng thái bình thường: Viền xanh Miku, chữ trắng */
 .nav-link { transition: all 0.3s ease; padding: 6px 20px; border-radius: 9999px; border: 1px solid rgba(57, 197, 187, 0.6); color: #ffffff; background: rgba(57, 197, 187, 0.15); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: none !important; }
-        .nav-link:hover { color: white !important; border-color: var(--violet) !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);}
+        .nav-link:hover { color: white !important; border-color: var(--pink) !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);}
 
         .btn-mag { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--miku); padding: 12px 20px; border-radius: 8px; font-size: 9px; font-weight: 900; letter-spacing: 1.5px; transition: 0.3s; cursor: none !important; text-transform: uppercase; }
         .btn-mag:hover { border-color: var(--violet); color: white; box-shadow: 0 0 15px var(--violet); cursor: none !important; }
@@ -66,7 +66,7 @@
 
 /* HIỆU ỨNG KHI RE CHUỘT */
 .social-link:hover { 
-    color: var(--violet); 
+    color: var(--pink); 
     transform: translateY(-3px); 
     text-shadow: 0 0 8px rgba(57, 197, 187, 0.6);
 }
@@ -79,7 +79,7 @@
     height: 1px;
     bottom: -4px;
     left: 0;
-    background-color: var(--violet);
+    background-color: var(--pink);
     transition: width 0.3s ease;
 }
 .social-link:hover::after {
@@ -278,6 +278,7 @@
     </script>
 </body>
 </html>
+
 
 
 
