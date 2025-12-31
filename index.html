@@ -46,6 +46,15 @@
         .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
 
+        /* --- ĐỒNG BỘ NAV LINK TỪ INDEX --- */
+        .nav-link { 
+            transition: all 0.3s ease; padding: 6px 20px; border-radius: 9999px; 
+            border: 1px solid rgba(57, 197, 187, 0.6); color: #ffffff; 
+            background: rgba(57, 197, 187, 0.15); font-size: 10px; font-weight: 800; 
+            letter-spacing: 2px; text-transform: uppercase; cursor: none !important;
+        }
+        .nav-link:hover { color: white !important; border-color: var(--violet) !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+
         .btn-mag { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--miku); padding: 12px 30px; border-radius: 8px; font-size: 10px; font-weight: 900; letter-spacing: 2px; transition: 0.3s; cursor: none !important; text-transform: uppercase; }
         .btn-mag:hover { border-color: var(--violet); color: white; box-shadow: 0 0 15px var(--violet); }
 
@@ -53,8 +62,6 @@
         .social-link { transition: all 0.3s ease; color: #94a3b8; cursor: none !important; }
         .social-link:hover { color: var(--miku); text-shadow: 0 0 12px var(--miku); transform: translateY(-2px); }
 
-        .nav-back-btn { transition: all 0.3s ease; cursor: none !important; }
-        .nav-back-btn:hover { border-color: var(--violet) !important; color: white !important; background: rgba(139, 92, 246, 0.1); box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
     </style>
 </head>
 <body>
@@ -62,7 +69,7 @@
 
     <div id="loader">
         <div class="flex flex-col items-center">
-            <div class="loader-brand">
+            <div class="flex items-center mb-4" style="font-size: 18px; letter-spacing: -0.05em;">
                 <span style="font-weight: 900; color: #39c5bb; margin-right: 6px; text-transform: uppercase;">VTP</span>
                 <span style="font-weight: 300; color: white; opacity: 0.9;">Editorial</span>
             </div>
@@ -72,14 +79,23 @@
     </div>
 
     <nav class="fixed w-full z-50 py-3 px-4 md:px-10 flex justify-between items-center bg-[#050a09]/70 backdrop-blur-xl border-b border-white/5">
-        <div class="flex flex-col">
+        <div class="flex flex-col flex-shrink-0 mr-6">
             <div class="text-md md:text-lg flex items-center tracking-tighter">
                 <span class="font-black text-[#39c5bb] mr-1.5 uppercase">VTP</span>
                 <span class="font-light text-white opacity-90">Editorial</span>
             </div>
-            <span id="digital-clock" class="text-[8px] font-mono text-gray-500 tracking-wider uppercase">00:00:00 AM</span>
+            <div class="flex flex-col space-y-0.5 mt-1">
+                <div class="items-center space-x-1.5 hidden md:flex">
+                    <div class="relative flex h-1.5 w-1.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#39c5bb] opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#39c5bb]"></span>
+                    </div>
+                    <span class="text-[8px] font-bold uppercase tracking-widest text-gray-400">Available</span>
+                </div>
+                <span id="digital-clock" class="text-[8px] font-mono text-gray-500 tracking-wider">00:00:00 AM</span>
+            </div>
         </div>
-        <a href="https://phatvo0401.github.io/#home" class="nav-back-btn px-5 py-1.5 rounded-full border border-[#39c5bb]/60 text-[#39c5bb] bg-[#39c5bb]/15 text-[9px] font-bold uppercase tracking-widest transition-all">Back to home</a>
+        <a href="https://phatvo0401.github.io/#home" class="nav-link">Back to home</a>
     </nav>
 
     <main class="flex flex-col items-center">
@@ -120,11 +136,17 @@
     </footer>
 
     <script>
-        function updateClock() { document.getElementById('digital-clock').innerText = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }).toUpperCase(); }
+        function updateClock() { 
+            const now = new Date();
+            document.getElementById('digital-clock').innerText = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }).toUpperCase(); 
+        }
         setInterval(updateClock, 1000); updateClock();
 
         const cursor = document.getElementById('cursor-follower');
-        document.addEventListener('mousemove', (e) => { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; });
+        document.addEventListener('mousemove', (e) => { 
+            cursor.style.left = e.clientX + 'px'; 
+            cursor.style.top = e.clientY + 'px'; 
+        });
 
         let p = 0; const li = setInterval(() => { 
             p += 5; 
