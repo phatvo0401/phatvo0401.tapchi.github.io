@@ -3,32 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VTP Editorial | Fixed 3D Magazine</title>
+    <title>VTP Editorial | Pro 3D Magazine</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/20.0.0/tween.umd.js"></script>
     <style>
-        :root { --accent: #39c5bb; --pink: #ff007f; }
-        body { font-family: 'Lexend', sans-serif; background-color: #050a09; color: #e6f7f6; overflow: hidden; }
-        #canvas-container { width: 100%; height: 80vh; position: relative; }
-        .ui-controls { position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 100; }
-        .btn-flip { background: rgba(255,255,255,0.05); border: 1px solid rgba(57,197,187,0.3); color: var(--accent); padding: 10px 30px; border-radius: 5px; font-weight: 900; font-size: 11px; letter-spacing: 2px; transition: 0.3s; }
-        .btn-flip:hover:not(:disabled) { border-color: var(--pink); box-shadow: 0 0 15px var(--pink); color: white; }
-        .btn-flip:disabled { opacity: 0.2; }
+        body { margin: 0; background-color: #050a09; overflow: hidden; }
+        #canvas-container { width: 100%; height: 100vh; }
+        .ui-controls { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 100; }
+        .btn-flip { background: rgba(57, 197, 187, 0.2); border: 1px solid #39c5bb; color: #39c5bb; padding: 12px 35px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-flip:hover:not(:disabled) { background: #39c5bb; color: white; box-shadow: 0 0 20px #39c5bb; }
+        .btn-flip:disabled { opacity: 0.2; cursor: not-allowed; }
     </style>
 </head>
 <body>
-    <header class="pt-10 text-center">
-        <h1 class="text-4xl font-black italic uppercase" style="background: linear-gradient(90deg, var(--accent), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">VTP Editorial</h1>
-        <p id="page-info" class="text-[9px] tracking-[0.5em] text-white/20 mt-2 uppercase">Fixed Double-Sided Rendering</p>
-    </header>
-
-    <div id="canvas-container">
-        <div class="ui-controls">
-            <button id="prevBtn" class="btn-flip">PREV</button>
-            <button id="nextBtn" class="btn-flip">NEXT</button>
-        </div>
+    <div class="ui-controls">
+        <button id="prevBtn" class="btn-flip">TRANG TRƯỚC</button>
+        <button id="nextBtn" class="btn-flip">TRANG TIẾP</button>
     </div>
+    <div id="canvas-container"></div>
 
     <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }</script>
     <script type="module">
@@ -40,8 +32,6 @@
         const backName = "Tạp Chí_00103";
         const contentPages = [];
         for (let i = 1; i <= 101; i++) contentPages.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
-        
-        // Cấu trúc danh sách: Bìa trước -> Trang 1 -> Trang 2 ... -> Trang 101 -> Bìa sau
         const ALL_ASSETS = [frontName, ...contentPages, backName];
 
         let scene, camera, renderer, bookGroup;
@@ -52,47 +42,56 @@
         function init() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
+            
             camera = new THREE.PerspectiveCamera(35, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(0, 0, 75);
+            camera.position.set(0, 0, 80);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
+            
+            // --- CẤU HÌNH MÀU SẮC CHUẨN ---
+            renderer.outputColorSpace = THREE.SRGBColorSpace; // Giúp màu không bị bạc
+            renderer.toneMapping = THREE.NoToneMapping; 
             container.appendChild(renderer.domElement);
 
-            scene.add(new THREE.AmbientLight(0xffffff, 3.5));
+            // Ánh sáng mạnh và đều để giữ màu gốc
+            const ambientLight = new THREE.AmbientLight(0xffffff, 4); 
+            scene.add(ambientLight);
+
             bookGroup = new THREE.Group();
             scene.add(bookGroup);
 
             const loader = new THREE.TextureLoader();
 
-            // QUAN TRỌNG: Xử lý gán ảnh vào các mặt của "tờ giấy"
             for (let i = 0; i < ALL_ASSETS.length; i += 2) {
-                const geometry = new THREE.BoxGeometry(W, H, 0.05);
+                const geometry = new THREE.BoxGeometry(W, H, 0.06);
                 geometry.translate(W/2, 0, 0);
 
+                // Load mặt trước
                 const texFront = loader.load(ALL_ASSETS[i] + EXT);
-                // Lấy trang tiếp theo cho mặt sau, nếu không có (trang lẻ cuối) thì lấy màu tối
-                const texBack = (i + 1 < ALL_ASSETS.length) ? loader.load(ALL_ASSETS[i+1] + EXT) : null;
+                texFront.colorSpace = THREE.SRGBColorSpace;
 
-                if (texBack) {
+                // Load mặt sau
+                let texBack = null;
+                if (i + 1 < ALL_ASSETS.length) {
+                    texBack = loader.load(ALL_ASSETS[i+1] + EXT);
+                    texBack.colorSpace = THREE.SRGBColorSpace;
+                    // SỬA LỖI LẬT NGƯỢC:
                     texBack.center.set(0.5, 0.5);
-                    texBack.repeat.set(-1, 1); // Lật ngược texture mặt sau để khi lật trang không bị ngược chữ
+                    texBack.repeat.set(-1, 1); 
                 }
 
-                // Material index trong Three.js BoxGeometry: 4 là mặt trước (+Z), 5 là mặt sau (-Z)
                 const materials = [
-                    new THREE.MeshPhongMaterial({ color: 0x111111 }), // Right
-                    new THREE.MeshPhongMaterial({ color: 0x111111 }), // Left
-                    new THREE.MeshPhongMaterial({ color: 0x111111 }), // Top
-                    new THREE.MeshPhongMaterial({ color: 0x111111 }), // Bottom
-                    new THREE.MeshPhongMaterial({ map: texFront }),   // Front Face (Trang lẻ)
-                    new THREE.MeshPhongMaterial({ map: texBack, color: texBack ? 0xffffff : 0x000000 }) // Back Face (Trang chẵn)
+                    new THREE.MeshBasicMaterial({ color: 0x111111 }), // cạnh
+                    new THREE.MeshBasicMaterial({ color: 0x111111 }),
+                    new THREE.MeshBasicMaterial({ color: 0x111111 }),
+                    new THREE.MeshBasicMaterial({ color: 0x111111 }),
+                    new THREE.MeshBasicMaterial({ map: texFront }), // Mặt lẻ (Phải)
+                    new THREE.MeshBasicMaterial({ map: texBack ? texBack : null, color: texBack ? 0xffffff : 0x000000 }) // Mặt chẵn (Trái)
                 ];
 
                 const page = new THREE.Mesh(geometry, materials);
-                
-                // Sắp xếp thứ tự Z để các trang không đè nhau (Trang trước nằm trên cùng)
-                page.position.z = - (i * 0.02);
+                page.position.z = -(i * 0.03); // Xếp chồng trang
                 
                 bookGroup.add(page);
                 meshPages.push(page);
@@ -100,36 +99,34 @@
 
             bookGroup.position.x = -W/2;
             const controls = new OrbitControls(camera, renderer.domElement);
-            controls.minPolarAngle = controls.maxPolarAngle = Math.PI / 2;
+            controls.enableDamping = true;
             
-            updateUI();
             animate();
+            updateUI();
         }
 
         function flip(direction) {
             if (direction === 'next' && currentIndex < meshPages.length - 1) {
                 const page = meshPages[currentIndex];
-                // Khi lật qua trái, đẩy nhẹ trang ra sau (Z) để không che mặt các trang sau
-                new TWEEN.Tween(page.position).to({ z: currentIndex * 0.02 }, 1000).start();
-                new TWEEN.Tween(page.rotation).to({ y: -Math.PI + 0.02 }, 1000).easing(TWEEN.Easing.Quartic.InOut).start();
+                // Lật trang và đẩy Z lên để không bị đè
+                new TWEEN.Tween(page.rotation).to({ y: -Math.PI + 0.01 }, 1200).easing(TWEEN.Easing.Quartic.InOut).start();
+                new TWEEN.Tween(page.position).to({ z: currentIndex * 0.03 + 0.1 }, 1200).start();
                 currentIndex++;
             } else if (direction === 'prev' && currentIndex > 0) {
                 currentIndex--;
                 const page = meshPages[currentIndex];
-                // Khi lật về phải, trả trang về đúng vị trí độ sâu ban đầu
-                new TWEEN.Tween(page.position).to({ z: - (currentIndex * 0.02) }, 1000).start();
-                new TWEEN.Tween(page.rotation).to({ y: 0 }, 1000).easing(TWEEN.Easing.Quartic.InOut).start();
+                new TWEEN.Tween(page.rotation).to({ y: 0 }, 1200).easing(TWEEN.Easing.Quartic.InOut).start();
+                new TWEEN.Tween(page.position).to({ z: -(currentIndex * 0.03) }, 1200).start();
             }
 
-            // Dịch chuyển cả quyển sách để căn giữa khi mở ra
-            new TWEEN.Tween(bookGroup.position).to({ x: currentIndex === 0 ? -W/2 : 0 }, 800).start();
+            // Dịch chuyển tâm quyển sách
+            new TWEEN.Tween(bookGroup.position).to({ x: currentIndex === 0 ? -W/2 : 0 }, 1000).easing(TWEEN.Easing.Cubic.InOut).start();
             updateUI();
         }
 
         function updateUI() {
             document.getElementById('prevBtn').disabled = (currentIndex === 0);
             document.getElementById('nextBtn').disabled = (currentIndex === meshPages.length - 1);
-            document.getElementById('page-info').innerText = `Sheet ${currentIndex + 1} / ${meshPages.length}`;
         }
 
         function animate() {
