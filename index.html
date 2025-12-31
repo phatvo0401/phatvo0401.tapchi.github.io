@@ -3,187 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VTP | 3D Magazine PDF Pro</title>
+    <title>VTP | 3D Magazine Production</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/20.0.0/tween.umd.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         :root { --miku: #39c5bb; --violet: #ff007f; --glass: rgba(255, 255, 255, 0.03); --border: rgba(57, 197, 187, 0.2); }
         body { 
             font-family: 'Lexend', sans-serif; background-color: #050a09; 
             background-image: radial-gradient(at 0% 0%, rgba(255, 0, 127, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(255, 0, 127, 0.1) 0px, transparent 50%);
-            background-attachment: fixed; color: #e6f7f6; overflow-x: hidden; cursor: none !important; 
+            background-attachment: fixed; color: #e6f7f6; overflow-x: hidden; cursor: none !important; user-select: none; 
         }
         #cursor-follower { width: 20px; height: 20px; border: 2px solid var(--miku); border-radius: 50%; position: fixed; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); background: linear-gradient(45deg, rgba(57, 197, 187, 0.2), rgba(255, 0, 127, 0.2)); }
-        #loader { position: fixed; inset: 0; background: #050a09; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .hidden { display: none !important; }
+        #magazine-view { width: 100%; height: 75vh; position: relative; }
+        .controls-ui { position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 10; }
         .btn-mag { background: var(--glass); border: 1px solid var(--border); color: var(--miku); padding: 12px 24px; border-radius: 8px; font-size: 10px; font-weight: 900; letter-spacing: 2px; transition: 0.3s; }
         .btn-mag:hover:not(:disabled) { border-color: var(--violet); color: white; box-shadow: 0 0 15px var(--violet); }
-        .btn-mag:disabled { opacity: 0.1; }
     </style>
 </head>
 <body>
     <div id="cursor-follower"></div>
-    <div id="loader">
-        <div class="text-[#39c5bb] font-black text-2xl mb-4 uppercase italic">VTP MAGAZINE LOADING...</div>
-        <div class="w-64 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div id="load-progress" class="h-full bg-[#ff007f]" style="width: 0%"></div>
-        </div>
-        <p id="load-status" class="text-white/30 text-[10px] mt-4 uppercase tracking-widest">Đang khởi tạo PDF engine...</p>
-    </div>
 
-    <nav class="fixed w-full z-50 py-4 px-10 flex justify-between items-center bg-[#050a09]/80 backdrop-blur-md border-b border-white/5">
-        <div class="flex items-center"><span class="font-black text-[#39c5bb] mr-1.5 uppercase">VTP</span><span class="font-light text-white opacity-80">EDITION</span></div>
-        <div id="page-counter" class="text-[10px] font-bold text-white/40 tracking-[0.3em]">PAGE 1 / --</div>
-    </nav>
+    <header class="pt-32 text-center px-4">
+        <h1 class="text-5xl font-black mb-2 uppercase italic" style="background: linear-gradient(90deg, var(--miku), var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Editorial</h1>
+        <p id="error-log" class="text-white/30 font-medium tracking-[0.2em] uppercase text-[10px]">Đang kiểm tra hình ảnh...</p>
+    </header>
 
-    <div id="magazine-view" class="w-full h-[80vh] pt-20">
-        <div class="absolute bottom-10 left-50 left-1/2 -translate-x-1/2 flex gap-4 z-20">
-            <button id="prevBtn" class="btn-mag">PREV</button>
-            <button id="nextBtn" class="btn-mag">NEXT</button>
+    <div id="magazine-view">
+        <div class="controls-ui">
+            <button id="prevBtn" class="btn-mag">PREVIOUS</button>
+            <button id="nextBtn" class="btn-mag">NEXT PAGE</button>
         </div>
     </div>
 
     <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }</script>
-
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // CHỈ CẦN THAY TÊN FILE PDF CỦA BẠN VÀO ĐÂY
-        const PDF_PATH = 'magazine.pdf'; 
+        // TÊN FILE GỐC (KHÔNG CÓ ĐUÔI)
+        const frontName = "Tạp Chí_00102";
+        const backName = "Tạp Chí_00103";
+        const contentPages = [];
+        for (let i = 1; i <= 101; i++) contentPages.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
+        const ALL_NAMES = [frontName, ...contentPages, backName];
 
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        let scene, camera, renderer, controls, bookGroup;
+        let scene, camera, renderer, bookGroup;
         let pages = [];
         let currentPage = 0;
-        let totalPages = 0;
-        const pageWidth = 16;
 
-        async function init() {
+        function init() {
             const container = document.getElementById('magazine-view');
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(35, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(0, 0, 70);
+            camera.position.set(0, 0, 75);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
             container.appendChild(renderer.domElement);
 
             scene.add(new THREE.AmbientLight(0xffffff, 2.5));
-
             bookGroup = new THREE.Group();
             scene.add(bookGroup);
 
-            try {
-                const loadingTask = pdfjsLib.getDocument(PDF_PATH);
-                const pdf = await loadingTask.promise;
-                totalPages = pdf.numPages;
-                document.getElementById('page-counter').innerText = `PAGE 1 / ${totalPages}`;
+            const loader = new THREE.TextureLoader();
 
-                for (let i = 1; i <= totalPages; i++) {
-                    document.getElementById('load-status').innerText = `ĐANG XỬ LÝ TRANG ${i}...`;
-                    const texture = await renderPage(pdf, i);
-                    addPageToBook(texture, i - 1);
-                    document.getElementById('load-progress').style.width = `${(i/totalPages)*100}%`;
-                }
+            ALL_NAMES.forEach((name, i) => {
+                const geometry = new THREE.BoxGeometry(16, 22, 0.05);
+                geometry.translate(8, 0, 0);
 
-                document.getElementById('loader').classList.add('hidden');
-                bookGroup.position.x = -pageWidth / 2; // Căn giữa bìa
-            } catch (err) {
-                document.getElementById('load-status').innerText = "LỖI: KHÔNG TÌM THẤY FILE PDF HOẶC LỖI CORS";
-                console.error(err);
-            }
+                // THỬ NẠP ẢNH VỚI CẢ .JPG VÀ .jpg
+                const fullPath = name + ".JPG"; 
+                const texture = loader.load(
+                    fullPath,
+                    () => { if(i===0) document.getElementById('error-log').innerText = "Đã nhận diện file thành công!"; },
+                    undefined,
+                    () => {
+                        // Nếu .JPG lỗi, thử nạp lại bằng .jpg viết thường
+                        texture.image = loader.load(name + ".jpg").image;
+                        document.getElementById('error-log').innerText = "CẢNH BÁO: Kiểm tra file " + fullPath;
+                    }
+                );
 
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.minPolarAngle = controls.maxPolarAngle = Math.PI / 2; // Khóa xoay dọc
+                const materials = [
+                    new THREE.MeshPhongMaterial({ color: 0x111111 }),
+                    new THREE.MeshPhongMaterial({ color: 0x111111 }),
+                    new THREE.MeshPhongMaterial({ color: 0x111111 }),
+                    new THREE.MeshPhongMaterial({ color: 0x111111 }),
+                    new THREE.MeshPhongMaterial({ map: texture }), 
+                    new THREE.MeshPhongMaterial({ color: (i === ALL_NAMES.length-1) ? 0x050505 : 0xffffff })
+                ];
 
-            updateUI();
+                const page = new THREE.Mesh(geometry, materials);
+                page.position.z = - (i < 6 ? i * 0.08 : 6 * 0.08);
+                page.visible = (i < 3);
+                pages.push(page);
+                bookGroup.add(page);
+            });
+
+            bookGroup.position.x = -8;
+            new OrbitControls(camera, renderer.domElement);
             animate();
         }
 
-        async function renderPage(pdf, num) {
-            const page = await pdf.getPage(num);
-            const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement('canvas');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-            const tex = new THREE.CanvasTexture(canvas);
-            tex.colorSpace = THREE.SRGBColorSpace;
-            return tex;
-        }
-
-        function addPageToBook(texture, index) {
-            const geometry = new THREE.BoxGeometry(pageWidth, 22, 0.06);
-            geometry.translate(pageWidth/2, 0, 0); // Trục xoay gáy sách
-
-            // Logic: Mặt sau bìa trước và các trang nội dung đều màu trắng (0xffffff)
-            // Riêng mặt sau bìa cuối cùng màu tối (0x111111)
-            const isLast = (index === totalPages - 1);
-            const backColor = isLast ? 0x111111 : 0xffffff;
-
-            const materials = [
-                new THREE.MeshPhongMaterial({ color: 0x222222 }), // Cạnh
-                new THREE.MeshPhongMaterial({ color: 0x222222 }),
-                new THREE.MeshPhongMaterial({ color: 0x222222 }),
-                new THREE.MeshPhongMaterial({ color: 0x222222 }),
-                new THREE.MeshPhongMaterial({ map: texture }), // Mặt trước (Ảnh PDF)
-                new THREE.MeshPhongMaterial({ color: backColor }) // Mặt sau cố định
-            ];
-
-            const mesh = new THREE.Mesh(geometry, materials);
-            mesh.position.z = -index * 0.1;
-            pages.push(mesh);
-            bookGroup.add(mesh);
+        function animate() {
+            requestAnimationFrame(animate);
+            TWEEN.update();
+            renderer.render(scene, camera);
         }
 
         window.nextPage = () => {
-            if (currentPage < totalPages - 1) {
-                new TWEEN.Tween(pages[currentPage].rotation).to({ y: -Math.PI + 0.05 }, 1000).easing(TWEEN.Easing.Quartic.InOut).start();
+            if (currentPage < ALL_NAMES.length - 1) {
+                new TWEEN.Tween(pages[currentPage].rotation).to({ y: -Math.PI + 0.04 }, 800).easing(TWEEN.Easing.Quartic.InOut).start();
                 currentPage++;
-                updateLayout();
+                pages.forEach((p, i) => p.visible = (i >= currentPage - 1 && i <= currentPage + 1));
+                new TWEEN.Tween(bookGroup.position).to({ x: (currentPage === 0 ? -8 : 0) }, 600).start();
             }
         };
 
         window.prevPage = () => {
             if (currentPage > 0) {
                 currentPage--;
-                new TWEEN.Tween(pages[currentPage].rotation).to({ y: 0 }, 1000).easing(TWEEN.Easing.Quartic.InOut).start();
-                updateLayout();
+                new TWEEN.Tween(pages[currentPage].rotation).to({ y: 0 }, 800).easing(TWEEN.Easing.Quartic.InOut).start();
+                pages.forEach((p, i) => p.visible = (i >= currentPage - 1 && i <= currentPage + 1));
+                new TWEEN.Tween(bookGroup.position).to({ x: (currentPage === 0 ? -8 : 0) }, 600).start();
             }
         };
-
-        function updateLayout() {
-            let targetX = (currentPage === 0) ? -pageWidth / 2 : 0;
-            new TWEEN.Tween(bookGroup.position).to({ x: targetX }, 700).easing(TWEEN.Easing.Cubic.InOut).start();
-            updateUI();
-        }
-
-        function updateUI() {
-            document.getElementById('prevBtn').disabled = (currentPage === 0);
-            document.getElementById('nextBtn').disabled = (currentPage === totalPages - 1);
-            document.getElementById('page-counter').innerText = `PAGE ${currentPage + 1} / ${totalPages}`;
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            TWEEN.update();
-            controls.update();
-            renderer.render(scene, camera);
-        }
 
         document.getElementById('nextBtn').onclick = window.nextPage;
         document.getElementById('prevBtn').onclick = window.prevPage;
 
         const cursor = document.getElementById('cursor-follower');
         document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
+            cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
         });
 
         init();
