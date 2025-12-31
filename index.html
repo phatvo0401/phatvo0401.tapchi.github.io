@@ -16,7 +16,7 @@
             cursor: none !important; 
         }
 
-        /* --- LOADING SCREEN (CỐ ĐỊNH SIZE CHỮ) --- */
+        /* --- LOADING SCREEN --- */
         #loader { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #050a09; z-index: 10000; display: flex; 
@@ -46,7 +46,7 @@
         .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
 
-        /* --- ĐỒNG BỘ NAV LINK TỪ INDEX --- */
+        /* --- NAVIGATION & BUTTONS --- */
         .nav-link { 
             transition: all 0.3s ease; padding: 6px 20px; border-radius: 9999px; 
             border: 1px solid rgba(57, 197, 187, 0.6); color: #ffffff; 
@@ -55,13 +55,11 @@
         }
         .nav-link:hover { color: white !important; border-color: var(--violet) !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
 
-        .btn-mag { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--miku); padding: 12px 30px; border-radius: 8px; font-size: 10px; font-weight: 900; letter-spacing: 2px; transition: 0.3s; cursor: none !important; text-transform: uppercase; }
+        .btn-mag { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--miku); padding: 12px 20px; border-radius: 8px; font-size: 9px; font-weight: 900; letter-spacing: 1.5px; transition: 0.3s; cursor: none !important; text-transform: uppercase; }
         .btn-mag:hover { border-color: var(--violet); color: white; box-shadow: 0 0 15px var(--violet); }
 
-        /* --- HIỆU ỨNG SÁNG & KHÔNG HIỆN CON TRỎ MẶC ĐỊNH --- */
         .social-link { transition: all 0.3s ease; color: #94a3b8; cursor: none !important; }
         .social-link:hover { color: var(--miku); text-shadow: 0 0 12px var(--miku); transform: translateY(-2px); }
-
     </style>
 </head>
 <body>
@@ -110,9 +108,11 @@
             <div id="book" class="book"></div>
         </div>
 
-        <div class="flex justify-center gap-5 mt-4 mb-16 reveal">
+        <div class="flex flex-wrap justify-center gap-3 mt-4 mb-16 reveal">
+            <button id="firstBtn" class="btn-mag">FIRST</button>
             <button id="prevBtn" class="btn-mag">PREV</button>
             <button id="nextBtn" class="btn-mag">NEXT</button>
+            <button id="lastBtn" class="btn-mag">LAST</button>
         </div>
     </main>
 
@@ -129,7 +129,7 @@
         
         <div class="pt-8 border-t border-white/5">
             <p class="text-slate-600 text-[9px] uppercase tracking-[0.5em] leading-loose">
-                © 2025 VTP Design — Portfolio Website <br>
+                © 2025 VTP Design — Portfolio Website<br>
                 All Rights Reserved — Created by Võ Thành Phát
             </p>
         </div>
@@ -200,6 +200,10 @@
             else book.style.transform = "translateX(50%)";
         }
 
+        function updateUINum() {
+            document.getElementById('page-num').innerText = `Sheet ${currentIndex + 1} / ${sheets.length}`;
+        }
+
         function next() {
             if (currentIndex < sheets.length && !isAnimating) {
                 isAnimating = true;
@@ -208,7 +212,7 @@
                 setTimeout(() => { s.style.zIndex = currentIndex + 100; isAnimating = false; }, 400);
                 currentIndex++;
                 updateBookPosition();
-                document.getElementById('page-num').innerText = `Sheet ${currentIndex + 1} / ${sheets.length}`;
+                updateUINum();
             }
         }
 
@@ -220,13 +224,68 @@
                 s.classList.remove('flipped');
                 setTimeout(() => { s.style.zIndex = s.dataset.baseZ; isAnimating = false; }, 400);
                 updateBookPosition();
-                document.getElementById('page-num').innerText = `Sheet ${currentIndex + 1} / ${sheets.length}`;
+                updateUINum();
             }
+        }
+
+        // HÀM NHẢY ĐẾN TRANG ĐẦU (HIỆU ỨNG TỰ NHIÊN)
+        function goToFirst() {
+            if (isAnimating || currentIndex === 0) return;
+            isAnimating = true;
+            
+            // Lật ngược lại từng trang với độ trễ tăng dần
+            const flippedSheets = sheets.filter(s => s.classList.contains('flipped'));
+            flippedSheets.reverse().forEach((s, i) => {
+                setTimeout(() => {
+                    s.classList.remove('flipped');
+                    s.style.zIndex = s.dataset.baseZ;
+                    
+                    // Khi trang cuối cùng trong chuỗi lật xong
+                    if (i === flippedSheets.length - 1) {
+                        setTimeout(() => { isAnimating = false; }, 400);
+                    }
+                }, i * 50); // Độ trễ 50ms mỗi trang tạo hiệu ứng lướt
+            });
+            
+            currentIndex = 0;
+            updateBookPosition();
+            updateUINum();
+        }
+
+        // HÀM NHẢY ĐẾN TRANG CUỐI (HIỆU ỨNG TỰ NHIÊN)
+        function goToLast() {
+            if (isAnimating || currentIndex === sheets.length) return;
+            isAnimating = true;
+            
+            const remainingSheets = sheets.filter(s => !s.classList.contains('flipped'));
+            remainingSheets.forEach((s, i) => {
+                setTimeout(() => {
+                    s.classList.add('flipped');
+                    // Z-index tăng dần để trang sau đè lên trang trước
+                    s.style.zIndex = (sheets.indexOf(s)) + 100;
+                    
+                    if (i === remainingSheets.length - 1) {
+                        setTimeout(() => { isAnimating = false; }, 400);
+                    }
+                }, i * 50); // Độ trễ 50ms tạo hiệu ứng lướt nhanh đến cuối
+            });
+            
+            currentIndex = sheets.length;
+            updateBookPosition();
+            updateUINum();
         }
 
         document.getElementById('nextBtn').onclick = next;
         document.getElementById('prevBtn').onclick = prev;
-        document.addEventListener('keydown', (e) => { if (e.key === "ArrowRight") next(); if (e.key === "ArrowLeft") prev(); });
+        document.getElementById('firstBtn').onclick = goToFirst;
+        document.getElementById('lastBtn').onclick = goToLast;
+        
+        document.addEventListener('keydown', (e) => { 
+            if (e.key === "ArrowRight") next(); 
+            if (e.key === "ArrowLeft") prev(); 
+            if (e.key === "Home") goToFirst();
+            if (e.key === "End") goToLast();
+        });
 
         createBook();
     </script>
