@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VTP Editorial | Full 3D Magazine</title>
+    <title>VTP Editorial | Fixed 3D Magazine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/20.0.0/tween.umd.js"></script>
@@ -20,7 +20,7 @@
 <body>
     <header class="pt-10 text-center">
         <h1 class="text-4xl font-black italic uppercase" style="background: linear-gradient(90deg, var(--accent), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">VTP Editorial</h1>
-        <p id="page-info" class="text-[9px] tracking-[0.5em] text-white/20 mt-2 uppercase">Loading Double-Sided Pages...</p>
+        <p id="page-info" class="text-[9px] tracking-[0.5em] text-white/20 mt-2 uppercase">Fixed Double-Sided Rendering</p>
     </header>
 
     <div id="canvas-container">
@@ -41,7 +41,7 @@
         const contentPages = [];
         for (let i = 1; i <= 101; i++) contentPages.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
         
-        // Sắp xếp danh sách file để gán vào mặt trước/sau
+        // Cấu trúc danh sách: Bìa trước -> Trang 1 -> Trang 2 ... -> Trang 101 -> Bìa sau
         const ALL_ASSETS = [frontName, ...contentPages, backName];
 
         let scene, camera, renderer, bookGroup;
@@ -59,39 +59,40 @@
             renderer.setSize(container.clientWidth, container.clientHeight);
             container.appendChild(renderer.domElement);
 
-            scene.add(new THREE.AmbientLight(0xffffff, 3));
+            scene.add(new THREE.AmbientLight(0xffffff, 3.5));
             bookGroup = new THREE.Group();
             scene.add(bookGroup);
 
             const loader = new THREE.TextureLoader();
 
-            // LOGIC TẠO TỜ GIẤY (1 tờ có 2 mặt)
+            // QUAN TRỌNG: Xử lý gán ảnh vào các mặt của "tờ giấy"
             for (let i = 0; i < ALL_ASSETS.length; i += 2) {
                 const geometry = new THREE.BoxGeometry(W, H, 0.05);
                 geometry.translate(W/2, 0, 0);
 
-                const frontTex = loader.load(ALL_ASSETS[i] + EXT);
-                // Nếu còn trang tiếp theo thì nạp vào mặt sau, không thì để màu đen (trang cuối)
-                const backTex = (i + 1 < ALL_ASSETS.length) ? loader.load(ALL_ASSETS[i+1] + EXT) : null;
-                
-                // Texture mặt sau cần được lật ngang (Repeat -1) để hiển thị đúng chiều khi lật
-                if(backTex) {
-                    backTex.center.set(0.5, 0.5);
-                    backTex.repeat.set(-1, 1);
+                const texFront = loader.load(ALL_ASSETS[i] + EXT);
+                // Lấy trang tiếp theo cho mặt sau, nếu không có (trang lẻ cuối) thì lấy màu tối
+                const texBack = (i + 1 < ALL_ASSETS.length) ? loader.load(ALL_ASSETS[i+1] + EXT) : null;
+
+                if (texBack) {
+                    texBack.center.set(0.5, 0.5);
+                    texBack.repeat.set(-1, 1); // Lật ngược texture mặt sau để khi lật trang không bị ngược chữ
                 }
 
+                // Material index trong Three.js BoxGeometry: 4 là mặt trước (+Z), 5 là mặt sau (-Z)
                 const materials = [
-                    new THREE.MeshPhongMaterial({ color: 0x111111 }), // Cạnh
-                    new THREE.MeshPhongMaterial({ color: 0x111111 }),
-                    new THREE.MeshPhongMaterial({ color: 0x111111 }),
-                    new THREE.MeshPhongMaterial({ color: 0x111111 }),
-                    new THREE.MeshPhongMaterial({ map: frontTex }), // Mặt trước
-                    new THREE.MeshPhongMaterial({ map: backTex, color: backTex ? 0xffffff : 0x050505 }) // Mặt sau
+                    new THREE.MeshPhongMaterial({ color: 0x111111 }), // Right
+                    new THREE.MeshPhongMaterial({ color: 0x111111 }), // Left
+                    new THREE.MeshPhongMaterial({ color: 0x111111 }), // Top
+                    new THREE.MeshPhongMaterial({ color: 0x111111 }), // Bottom
+                    new THREE.MeshPhongMaterial({ map: texFront }),   // Front Face (Trang lẻ)
+                    new THREE.MeshPhongMaterial({ map: texBack, color: texBack ? 0xffffff : 0x000000 }) // Back Face (Trang chẵn)
                 ];
 
                 const page = new THREE.Mesh(geometry, materials);
-                // Giới hạn độ dày gáy sách hiển thị (logic trang ảo)
-                page.position.z = - (meshPages.length < 6 ? meshPages.length * 0.1 : 6 * 0.1);
+                
+                // Sắp xếp thứ tự Z để các trang không đè nhau (Trang trước nằm trên cùng)
+                page.position.z = - (i * 0.02);
                 
                 bookGroup.add(page);
                 meshPages.push(page);
@@ -107,12 +108,20 @@
 
         function flip(direction) {
             if (direction === 'next' && currentIndex < meshPages.length - 1) {
-                new TWEEN.Tween(meshPages[currentIndex].rotation).to({ y: -Math.PI + 0.03 }, 1000).easing(TWEEN.Easing.Quartic.InOut).start();
+                const page = meshPages[currentIndex];
+                // Khi lật qua trái, đẩy nhẹ trang ra sau (Z) để không che mặt các trang sau
+                new TWEEN.Tween(page.position).to({ z: currentIndex * 0.02 }, 1000).start();
+                new TWEEN.Tween(page.rotation).to({ y: -Math.PI + 0.02 }, 1000).easing(TWEEN.Easing.Quartic.InOut).start();
                 currentIndex++;
             } else if (direction === 'prev' && currentIndex > 0) {
                 currentIndex--;
-                new TWEEN.Tween(meshPages[currentIndex].rotation).to({ y: 0 }, 1000).easing(TWEEN.Easing.Quartic.InOut).start();
+                const page = meshPages[currentIndex];
+                // Khi lật về phải, trả trang về đúng vị trí độ sâu ban đầu
+                new TWEEN.Tween(page.position).to({ z: - (currentIndex * 0.02) }, 1000).start();
+                new TWEEN.Tween(page.rotation).to({ y: 0 }, 1000).easing(TWEEN.Easing.Quartic.InOut).start();
             }
+
+            // Dịch chuyển cả quyển sách để căn giữa khi mở ra
             new TWEEN.Tween(bookGroup.position).to({ x: currentIndex === 0 ? -W/2 : 0 }, 800).start();
             updateUI();
         }
