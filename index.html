@@ -161,26 +161,21 @@
         const obs = new IntersectionObserver((es) => { es.forEach(e => { if (e.isIntersecting) e.target.classList.add('active'); }); }, { threshold: 0.1 });
         document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-        const EXT = ".JPG.jpg"; // Đảm bảo EXT khớp với đuôi file thực tế trên GitHub
+        const EXT = ".JPG.jpg"; // Hãy đảm bảo đuôi này khớp chính xác với file trên GitHub
 const ASSETS = [];
 
-// 1. Trang bìa (Tờ 1 - mặt trước)
-ASSETS.push("Tạp Chí_00102"); 
+// 1. Tờ đầu tiên: Mặt trước là Bìa, Mặt sau là Trang trắng 00000
+ASSETS.push("Tạp Chí_00102"); // Trang bìa (Vị trí 0 trong mảng - bên phải lúc đầu)
+ASSETS.push("Tạp Chí_00000"); // Trang trắng mới (Vị trí 1 trong mảng - mặt sau tờ 1)
 
-// 2. Trang trắng mới bổ sung (Tờ 1 - mặt sau)
-ASSETS.push("Tạp Chí_00000"); 
-
-// 3. Các trang nội dung từ 00001 đến 00101
+// 2. Vòng lặp lấy các trang nội dung từ 00001 đến 00101
+// Trang 00001 sẽ nằm ở vị trí số 2 trong mảng (tức là mặt bên phải của tờ thứ 2)
 for (let i = 1; i <= 101; i++) {
     ASSETS.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
 }
 
-// 4. Trang bìa sau cuối cùng
+// 3. Cuối cùng là bìa sau
 ASSETS.push("Tạp Chí_00103");
-        const book = document.getElementById('book');
-        const sheets = [];
-        let currentIndex = 0;
-        let isAnimating = false;
 
         function createBook() {
             for (let i = 0; i < ASSETS.length; i += 2) {
@@ -239,53 +234,37 @@ ASSETS.push("Tạp Chí_00103");
             }
         }
 
-        // HÀM NHẢY ĐẾN TRANG ĐẦU (HIỆU ỨNG TỰ NHIÊN)
-        function goToFirst() {
-            if (isAnimating || currentIndex === 0) return;
-            isAnimating = true;
-            
-            // Lật ngược lại từng trang với độ trễ tăng dần
-            const flippedSheets = sheets.filter(s => s.classList.contains('flipped'));
-            flippedSheets.reverse().forEach((s, i) => {
-                setTimeout(() => {
-                    s.classList.remove('flipped');
-                    s.style.zIndex = s.dataset.baseZ;
-                    
-                    // Khi trang cuối cùng trong chuỗi lật xong
-                    if (i === flippedSheets.length - 1) {
-                        setTimeout(() => { isAnimating = false; }, 400);
-                    }
-                }, i * 50); // Độ trễ 50ms mỗi trang tạo hiệu ứng lướt
-            });
-            
-            currentIndex = 0;
-            updateBookPosition();
-            updateUINum();
-        }
+        // NHẢY THẲNG VỀ ĐẦU (Tất cả lật về cùng lúc)
+function goToFirst() {
+    if (isAnimating || currentIndex === 0) return;
+    isAnimating = true;
+    
+    sheets.forEach(s => {
+        s.classList.remove('flipped');
+        s.style.zIndex = s.dataset.baseZ;
+    });
+    
+    currentIndex = 0;
+    updateBookPosition();
+    updateUINum();
+    setTimeout(() => { isAnimating = false; }, 400);
+}
 
-        // HÀM NHẢY ĐẾN TRANG CUỐI (HIỆU ỨNG TỰ NHIÊN)
-        function goToLast() {
-            if (isAnimating || currentIndex === sheets.length) return;
-            isAnimating = true;
-            
-            const remainingSheets = sheets.filter(s => !s.classList.contains('flipped'));
-            remainingSheets.forEach((s, i) => {
-                setTimeout(() => {
-                    s.classList.add('flipped');
-                    // Z-index tăng dần để trang sau đè lên trang trước
-                    s.style.zIndex = (sheets.indexOf(s)) + 100;
-                    
-                    if (i === remainingSheets.length - 1) {
-                        setTimeout(() => { isAnimating = false; }, 400);
-                    }
-                }, i * 50); // Độ trễ 50ms tạo hiệu ứng lướt nhanh đến cuối
-            });
-            
-            currentIndex = sheets.length;
-            updateBookPosition();
-            updateUINum();
-        }
-
+// NHẢY THẲNG ĐẾN CUỐI (Tất cả lật đi cùng lúc)
+function goToLast() {
+    if (isAnimating || currentIndex === sheets.length) return;
+    isAnimating = true;
+    
+    sheets.forEach((s, i) => {
+        s.classList.add('flipped');
+        s.style.zIndex = i + 100;
+    });
+    
+    currentIndex = sheets.length;
+    updateBookPosition();
+    updateUINum();
+    setTimeout(() => { isAnimating = false; }, 400);
+}
         document.getElementById('nextBtn').onclick = next;
         document.getElementById('prevBtn').onclick = prev;
         document.getElementById('firstBtn').onclick = goToFirst;
@@ -302,5 +281,6 @@ ASSETS.push("Tạp Chí_00103");
     </script>
 </body>
 </html>
+
 
 
