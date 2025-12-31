@@ -195,20 +195,51 @@
             }
         }
 
+        // HÀM NHẢY ĐẾN TRANG ĐẦU (HIỆU ỨNG TỰ NHIÊN)
         function goToFirst() {
             if (isAnimating || currentIndex === 0) return;
             isAnimating = true;
-            sheets.forEach(s => { s.classList.remove('flipped'); s.style.zIndex = s.dataset.baseZ; });
-            currentIndex = 0; updateBookPosition(); updateUINum();
-            setTimeout(() => { isAnimating = false; }, 400);
+            
+            // Lật ngược lại từng trang với độ trễ tăng dần
+            const flippedSheets = sheets.filter(s => s.classList.contains('flipped'));
+            flippedSheets.reverse().forEach((s, i) => {
+                setTimeout(() => {
+                    s.classList.remove('flipped');
+                    s.style.zIndex = s.dataset.baseZ;
+                    
+                    // Khi trang cuối cùng trong chuỗi lật xong
+                    if (i === flippedSheets.length - 1) {
+                        setTimeout(() => { isAnimating = false; }, 400);
+                    }
+                }, i * 50); // Độ trễ 50ms mỗi trang tạo hiệu ứng lướt
+            });
+            
+            currentIndex = 0;
+            updateBookPosition();
+            updateUINum();
         }
 
+        // HÀM NHẢY ĐẾN TRANG CUỐI (HIỆU ỨNG TỰ NHIÊN)
         function goToLast() {
             if (isAnimating || currentIndex === sheets.length) return;
             isAnimating = true;
-            sheets.forEach((s, i) => { s.classList.add('flipped'); s.style.zIndex = i + 100; });
-            currentIndex = sheets.length; updateBookPosition(); updateUINum();
-            setTimeout(() => { isAnimating = false; }, 400);
+            
+            const remainingSheets = sheets.filter(s => !s.classList.contains('flipped'));
+            remainingSheets.forEach((s, i) => {
+                setTimeout(() => {
+                    s.classList.add('flipped');
+                    // Z-index tăng dần để trang sau đè lên trang trước
+                    s.style.zIndex = (sheets.indexOf(s)) + 100;
+                    
+                    if (i === remainingSheets.length - 1) {
+                        setTimeout(() => { isAnimating = false; }, 400);
+                    }
+                }, i * 50); // Độ trễ 50ms tạo hiệu ứng lướt nhanh đến cuối
+            });
+            
+            currentIndex = sheets.length;
+            updateBookPosition();
+            updateUINum();
         }
 
         // Gán sự kiện
@@ -228,3 +259,4 @@
     </script>
 </body>
 </html>
+
