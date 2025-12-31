@@ -16,46 +16,48 @@
             cursor: none !important; -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- LOADING SCREEN (GỐC 100%) --- */
+        /* --- LOADING SCREEN (GỐC) --- */
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050a09; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         #loader.hidden { opacity: 0; pointer-events: none; visibility: hidden; }
         .loader-bar-container { width: 150px; height: 2px; background: rgba(255, 255, 255, 0.05); position: relative; overflow: hidden; border-radius: 2px; }
         #loader-progress { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: linear-gradient(90deg, var(--miku), var(--violet)); transition: width 0.2s ease; }
         .loader-percentage { font-family: monospace; font-size: 5rem; font-weight: 900; color: var(--miku); opacity: 0.3; position: absolute; bottom: 5%; right: 5%; line-height: 1; }
 
-        /* --- CURSOR --- */
-        #cursor-follower { width: 20px; height: 20px; border: 2px solid var(--miku); border-radius: 50%; position: fixed; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); background: linear-gradient(45deg, rgba(57, 197, 187, 0.2), rgba(139, 92, 246, 0.2)); transition: transform 0.08s ease-out; }
-        @media (max-width: 1024px) { #cursor-follower { display: none; } body { cursor: auto !important; } }
+        /* --- CURSOR (PHỤC HỒI CHO PC) --- */
+        #cursor-follower { width: 20px; height: 20px; border: 2px solid var(--miku); border-radius: 50%; position: fixed; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); background: linear-gradient(45deg, rgba(57, 197, 187, 0.2), rgba(139, 92, 246, 0.2)); transition: transform 0.08s ease-out; display: block; }
+        @media (max-width: 1024px) { #cursor-follower { display: none !important; } body { cursor: auto !important; } }
 
         /* --- FLIPBOOK ENGINE --- */
         .book-wrapper { display: flex; justify-content: center; align-items: center; padding: 20px 0; perspective: 2500px; }
         
-        /* PC: Giữ hiệu ứng lật */
+        /* PC: Logic trang đôi lật 3D */
         .book { position: relative; width: 420px; height: 580px; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; }
         .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1), z-index 0.1s step-end; }
-        .front, .back { position: absolute; width: 100%; height: 100%; top: 0; left: 0; backface-visibility: hidden; background-color: #111; box-shadow: inset 0 0 80px rgba(0,0,0,0.6); overflow: hidden; }
+        .front, .back { position: absolute; width: 100%; height: 100%; top: 0; left: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background-color: #111; box-shadow: inset 0 0 80px rgba(0,0,0,0.6); overflow: hidden; }
         .back { transform: rotateY(180deg); z-index: 1; }
         .flipped { transform: rotateY(-180deg); }
 
-        /* MOBILE: Chuyển sang hiển thị phẳng (Static) */
+        /* MOBILE: Trang đơn tĩnh như đã chốt */
         @media (max-width: 767px) {
             .book-wrapper { perspective: none; }
-            .book { width: 90vw; height: 125vw; transform: none !important; }
-            .page { display: none; transform: none !important; transform-origin: center; position: relative; width: 100%; height: 100%; }
+            .book { width: 90vw; height: 125vw; transform: none !important; transform-style: flat; }
+            .page { display: none; transform: none !important; position: relative; width: 100%; height: 100%; }
             .page.active-mobile { display: block; z-index: 10 !important; }
             .front, .back { backface-visibility: visible; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-            .back { display: none; } /* Mobile chỉ hiện mặt front */
+            .back { display: none !important; }
         }
 
         .blank-page { background-color: #ffffff !important; box-shadow: none !important; }
         img { width: 101%; height: 101%; object-fit: cover; pointer-events: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
-        /* --- UI COMPONENTS (GỐC 100%) --- */
+        /* --- UI COMPONENTS (KHÔI PHỤC 100%) --- */
         .nav-link { transition: all 0.3s ease; padding: 6px 20px; border-radius: 9999px; border: 1px solid rgba(57, 197, 187, 0.6); color: #ffffff; background: rgba(57, 197, 187, 0.15); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: none !important; }
+        .nav-link:hover { border-color: var(--violet); box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
         .btn-mag { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--miku); padding: 12px 20px; border-radius: 8px; font-size: 9px; font-weight: 900; letter-spacing: 1.5px; transition: 0.3s; cursor: none !important; text-transform: uppercase; }
-        .btn-mag:active { transform: scale(0.9); background: var(--miku); color: black; }
+        .btn-mag:hover { border-color: var(--violet); color: white; box-shadow: 0 0 15px var(--violet); }
         .social-link { transition: all 0.3s ease; color: #94a3b8; cursor: none !important; }
-        .reveal { opacity: 0; transform: translateY(30px); transition: 0.8s; }
+        .social-link:hover { color: var(--miku); transform: translateY(-2px); }
+        .reveal { opacity: 0; transform: translateY(30px); transition: 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
     </style>
 </head>
@@ -74,7 +76,7 @@
     </div>
 
     <nav class="fixed w-full z-50 py-3 px-4 md:px-10 flex justify-between items-center bg-[#050a09]/70 backdrop-blur-xl border-b border-white/5">
-        <div class="flex flex-col flex-shrink-0 mr-6">
+        <div class="flex flex-col">
             <div class="text-md md:text-lg flex items-center tracking-tighter">
                 <span class="font-black text-[#39c5bb] mr-1.5 uppercase">VTP</span>
                 <span class="font-light text-white opacity-90">Editorial</span>
@@ -115,10 +117,17 @@
         <footer id="contact" class="w-full py-16 text-center border-t border-[#39c5bb]/10 reveal">
             <h3 class="text-xl font-black mb-10 bg-gradient-to-r from-[#39c5bb] to-[#8b5cf6] bg-clip-text text-transparent italic uppercase tracking-widest">Let's work together</h3>
             <p class="text-lg font-bold mb-2 text-white">phatvo.0401@gmail.com</p>
-            <div class="flex justify-center gap-8 md:gap-16 mt-10 text-[10px] font-bold">
-                <a href="#" class="social-link tracking-widest uppercase">FACEBOOK</a>
-                <a href="#" class="social-link tracking-widest uppercase">INSTAGRAM</a>
-                <a href="#" class="social-link tracking-widest uppercase">BEHANCE</a>
+            <p class="text-gray-500 text-[11px] uppercase tracking-[0.2em] mb-12">038 477 2414 | CỦ CHI, TP. HỒ CHÍ MINH</p>
+            <div class="flex justify-center gap-8 md:gap-16 mb-20 text-[10px] font-bold">
+                <a href="https://www.facebook.com/phatvo.0401/" target="_blank" class="social-link tracking-widest uppercase">FACEBOOK</a>
+                <a href="https://www.instagram.com/phatvo.0401/" target="_blank" class="social-link tracking-widest uppercase">INSTAGRAM</a>
+                <a href="https://www.behance.net/phtthnh42" target="_blank" class="social-link tracking-widest uppercase">BEHANCE</a>
+            </div>
+            <div class="pt-8 border-t border-white/5">
+                <p class="text-slate-600 text-[9px] uppercase tracking-[0.5em] leading-loose">
+                    © 2025 VTP Design — Portfolio Website<br>
+                    All Rights Reserved — Created by Võ Thành Phát
+                </p>
             </div>
         </footer>
     </main>
@@ -128,17 +137,26 @@
         function updateClock() { document.getElementById('digital-clock').innerText = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }).toUpperCase(); }
         setInterval(updateClock, 1000); updateClock();
 
-        // Con trỏ & Loader
+        // Con trỏ ảo PC
         const cursor = document.getElementById('cursor-follower');
-        document.addEventListener('mousemove', (e) => { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; });
-        let lp = 0; const li = setInterval(() => { lp += 5; document.getElementById('loader-progress').style.width=lp+'%'; document.getElementById('loader-num').innerText=lp.toString().padStart(2,'0'); if(lp>=100){clearInterval(li); setTimeout(()=>document.getElementById('loader').classList.add('hidden'),500);} }, 40);
+        document.addEventListener('mousemove', (e) => { 
+            cursor.style.left = e.clientX + 'px'; 
+            cursor.style.top = e.clientY + 'px'; 
+        });
+
+        // Loader % Gốc
+        let lp = 0; const li = setInterval(() => { 
+            lp += 5; document.getElementById('loader-progress').style.width=lp+'%'; 
+            document.getElementById('loader-num').innerText=lp.toString().padStart(2,'0'); 
+            if(lp>=100){clearInterval(li); setTimeout(()=>document.getElementById('loader').classList.add('hidden'),500);} 
+        }, 40);
 
         // Assets
         const EXT = ".JPG.jpg";
         const isMobile = window.innerWidth < 768;
-        const ASSETS = ["Tạp Chí_00102", "BLANK"]; // Bìa + trắng
-        for(let i=1; i<=101; i++) ASSETS.push(`Tạp Chí_${String(i).padStart(5,'0')}`);
-        ASSETS.push("Tạp Chí_00103");
+        const RAW_ASSETS = ["Tạp Chí_00102", "BLANK"]; // Bìa + trắng
+        for(let i=1; i<=101; i++) RAW_ASSETS.push(`Tạp Chí_${String(i).padStart(5,'0')}`);
+        RAW_ASSETS.push("Tạp Chí_00103");
 
         const book = document.getElementById('book');
         const sheets = [];
@@ -147,8 +165,8 @@
 
         function createBook() {
             if (isMobile) {
-                // MOBILE: Tạo mỗi ảnh 1 trang riêng, chồng lên nhau
-                ASSETS.forEach((asset, i) => {
+                // MOBILE: Trang đơn tĩnh
+                RAW_ASSETS.forEach((asset, i) => {
                     const page = document.createElement('div');
                     page.className = 'page' + (i === 0 ? ' active-mobile' : '');
                     const front = document.createElement('div');
@@ -159,17 +177,17 @@
                     sheets.push(page);
                 });
             } else {
-                // PC: Giữ logic lật trang đôi
-                for (let i = 0; i < ASSETS.length; i += 2) {
+                // PC: Trang đôi lật 3D
+                for (let i = 0; i < RAW_ASSETS.length; i += 2) {
                     const sheet = document.createElement('div');
                     sheet.className = 'page';
-                    const baseZ = Math.floor((ASSETS.length - i) / 2);
+                    const baseZ = Math.floor((RAW_ASSETS.length - i) / 2);
                     sheet.style.zIndex = baseZ; sheet.dataset.baseZ = baseZ;
                     const front = document.createElement('div');
-                    front.className = 'front' + (ASSETS[i] === "BLANK" ? " blank-page" : "");
-                    if (ASSETS[i] !== "BLANK") { const img = new Image(); img.src = ASSETS[i] + EXT; front.appendChild(img); }
+                    front.className = 'front' + (RAW_ASSETS[i] === "BLANK" ? " blank-page" : "");
+                    if (RAW_ASSETS[i] !== "BLANK") { const img = new Image(); img.src = RAW_ASSETS[i] + EXT; front.appendChild(img); }
                     const back = document.createElement('div');
-                    const bImg = ASSETS[i+1];
+                    const bImg = RAW_ASSETS[i+1];
                     back.className = 'back' + (bImg === "BLANK" ? " blank-page" : "");
                     if (bImg && bImg !== "BLANK") { const img = new Image(); img.src = bImg + EXT; back.appendChild(img); }
                     sheet.appendChild(front); sheet.appendChild(back);
@@ -189,27 +207,56 @@
         }
 
         function next() {
-            if (currentIndex < sheets.length - 1 && isMobile) { currentIndex++; updateUI(); }
-            else if (currentIndex < sheets.length && !isMobile && !isAnimating) {
-                isAnimating = true; sheets[currentIndex].classList.add('flipped');
-                setTimeout(() => { sheets[currentIndex-1].style.zIndex = currentIndex + 100; isAnimating = false; }, 400);
+            if (isMobile && currentIndex < sheets.length - 1) { 
+                currentIndex++; updateUI(); 
+            } else if (!isMobile && currentIndex < sheets.length && !isAnimating) {
+                isAnimating = true; 
+                const s = sheets[currentIndex];
+                s.classList.add('flipped');
+                setTimeout(() => { s.style.zIndex = currentIndex + 100; isAnimating = false; }, 400);
                 currentIndex++; updateUI();
             }
         }
 
         function prev() {
-            if (currentIndex > 0 && isMobile) { currentIndex--; updateUI(); }
-            else if (currentIndex > 0 && !isMobile && !isAnimating) {
-                isAnimating = true; currentIndex--; sheets[currentIndex].classList.remove('flipped');
-                setTimeout(() => { sheets[currentIndex].style.zIndex = sheets[currentIndex].dataset.baseZ; isAnimating = false; }, 400);
+            if (isMobile && currentIndex > 0) { 
+                currentIndex--; updateUI(); 
+            } else if (!isMobile && currentIndex > 0 && !isAnimating) {
+                isAnimating = true; currentIndex--;
+                const s = sheets[currentIndex];
+                s.classList.remove('flipped');
+                setTimeout(() => { s.style.zIndex = s.dataset.baseZ; isAnimating = false; }, 400);
                 updateUI();
             }
         }
 
-        document.getElementById('nextBtn').onclick = next;
-        document.getElementById('prevBtn').onclick = prev;
-        document.getElementById('firstBtn').onclick = () => { currentIndex = 0; if(!isMobile) sheets.forEach(s => {s.classList.remove('flipped'); s.style.zIndex=s.dataset.baseZ;}); updateUI(); };
-        document.getElementById('lastBtn').onclick = () => { currentIndex = sheets.length - 1; if(!isMobile) sheets.forEach((s,i) => {s.classList.add('flipped'); s.style.zIndex=i+100;}); updateUI(); };
+        // Điều khiển
+        const bind = (id, fn) => {
+            const el = document.getElementById(id);
+            el.onclick = (e) => { e.preventDefault(); fn(); };
+            el.ontouchend = (e) => { e.preventDefault(); fn(); };
+        };
+        bind('nextBtn', next); bind('prevBtn', prev);
+        bind('firstBtn', () => { 
+            if(isMobile) { currentIndex = 0; } else {
+                sheets.forEach(s => { s.classList.remove('flipped'); s.style.zIndex = s.dataset.baseZ; });
+                currentIndex = 0;
+            }
+            updateUI(); 
+        });
+        bind('lastBtn', () => { 
+            if(isMobile) { currentIndex = sheets.length - 1; } else {
+                sheets.forEach((s, i) => { s.classList.add('flipped'); s.style.zIndex = i + 100; });
+                currentIndex = sheets.length;
+            }
+            updateUI(); 
+        });
+
+        // Phím tắt PC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "ArrowRight") next();
+            if (e.key === "ArrowLeft") prev();
+        });
 
         const obs = new IntersectionObserver((es) => { es.forEach(e => { if (e.isIntersecting) e.target.classList.add('active'); }); }, { threshold: 0.1 });
         document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
