@@ -3,36 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VTP Editorial | 3D Magazine</title>
+    <title>VTP Editorial | Full 3D Magazine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/20.0.0/tween.umd.js"></script>
     <style>
         :root { --accent: #39c5bb; --pink: #ff007f; }
-        body { 
-            font-family: 'Lexend', sans-serif; background-color: #050a09; 
-            color: #e6f7f6; overflow: hidden; user-select: none;
-        }
-        #cursor-follower { width: 20px; height: 20px; border: 2px solid var(--accent); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); transition: transform 0.1s; }
+        body { font-family: 'Lexend', sans-serif; background-color: #050a09; color: #e6f7f6; overflow: hidden; }
         #canvas-container { width: 100%; height: 80vh; position: relative; }
         .ui-controls { position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 100; }
-        .btn-flip { background: rgba(255,255,255,0.05); border: 1px solid rgba(57,197,187,0.3); color: var(--accent); padding: 10px 30px; border-radius: 5px; font-weight: 900; font-size: 11px; letter-spacing: 2px; backdrop-filter: blur(5px); transition: 0.3s; }
-        .btn-flip:hover:not(:disabled) { border-color: var(--pink); color: white; box-shadow: 0 0 15px var(--pink); }
-        .btn-flip:disabled { opacity: 0.2; cursor: not-allowed; }
+        .btn-flip { background: rgba(255,255,255,0.05); border: 1px solid rgba(57,197,187,0.3); color: var(--accent); padding: 10px 30px; border-radius: 5px; font-weight: 900; font-size: 11px; letter-spacing: 2px; transition: 0.3s; }
+        .btn-flip:hover:not(:disabled) { border-color: var(--pink); box-shadow: 0 0 15px var(--pink); color: white; }
+        .btn-flip:disabled { opacity: 0.2; }
     </style>
 </head>
 <body>
-    <div id="cursor-follower"></div>
-
     <header class="pt-10 text-center">
-        <h1 class="text-4xl font-black italic tracking-tighter uppercase" style="background: linear-gradient(90deg, var(--accent), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">VTP Editorial</h1>
-        <p id="page-info" class="text-[9px] tracking-[0.5em] text-white/20 mt-2 uppercase">Initialising 3D Space...</p>
+        <h1 class="text-4xl font-black italic uppercase" style="background: linear-gradient(90deg, var(--accent), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">VTP Editorial</h1>
+        <p id="page-info" class="text-[9px] tracking-[0.5em] text-white/20 mt-2 uppercase">Loading Double-Sided Pages...</p>
     </header>
 
     <div id="canvas-container">
         <div class="ui-controls">
-            <button id="prevBtn" class="btn-flip">PREVIOUS</button>
-            <button id="nextBtn" class="btn-flip">NEXT PAGE</button>
+            <button id="prevBtn" class="btn-flip">PREV</button>
+            <button id="nextBtn" class="btn-flip">NEXT</button>
         </div>
     </div>
 
@@ -41,15 +35,14 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // --- CẤU HÌNH TÊN FILE THEO YÊU CẦU ---
-        const EXT = ".JPG.jpg"; // Cấu trúc đuôi file GitHub của bạn
-        const frontCover = "Tạp Chí_00102";
-        const backCover = "Tạp Chí_00103";
-        const pagesData = [];
-        for (let i = 1; i <= 101; i++) {
-            pagesData.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
-        }
-        const ALL_FILE_NAMES = [frontCover, ...pagesData, backCover];
+        const EXT = ".JPG.jpg";
+        const frontName = "Tạp Chí_00102";
+        const backName = "Tạp Chí_00103";
+        const contentPages = [];
+        for (let i = 1; i <= 101; i++) contentPages.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
+        
+        // Sắp xếp danh sách file để gán vào mặt trước/sau
+        const ALL_ASSETS = [frontName, ...contentPages, backName];
 
         let scene, camera, renderer, bookGroup;
         let meshPages = [];
@@ -66,74 +59,68 @@
             renderer.setSize(container.clientWidth, container.clientHeight);
             container.appendChild(renderer.domElement);
 
-            scene.add(new THREE.AmbientLight(0xffffff, 2.8));
+            scene.add(new THREE.AmbientLight(0xffffff, 3));
             bookGroup = new THREE.Group();
             scene.add(bookGroup);
 
             const loader = new THREE.TextureLoader();
 
-            ALL_FILE_NAMES.forEach((name, i) => {
-                const geometry = new THREE.BoxGeometry(W, H, 0.04);
-                geometry.translate(W/2, 0, 0); // Đặt trục xoay tại gáy
+            // LOGIC TẠO TỜ GIẤY (1 tờ có 2 mặt)
+            for (let i = 0; i < ALL_ASSETS.length; i += 2) {
+                const geometry = new THREE.BoxGeometry(W, H, 0.05);
+                geometry.translate(W/2, 0, 0);
 
-                const isLast = (i === ALL_FILE_NAMES.length - 1);
+                const frontTex = loader.load(ALL_ASSETS[i] + EXT);
+                // Nếu còn trang tiếp theo thì nạp vào mặt sau, không thì để màu đen (trang cuối)
+                const backTex = (i + 1 < ALL_ASSETS.length) ? loader.load(ALL_ASSETS[i+1] + EXT) : null;
+                
+                // Texture mặt sau cần được lật ngang (Repeat -1) để hiển thị đúng chiều khi lật
+                if(backTex) {
+                    backTex.center.set(0.5, 0.5);
+                    backTex.repeat.set(-1, 1);
+                }
+
                 const materials = [
                     new THREE.MeshPhongMaterial({ color: 0x111111 }), // Cạnh
                     new THREE.MeshPhongMaterial({ color: 0x111111 }),
                     new THREE.MeshPhongMaterial({ color: 0x111111 }),
                     new THREE.MeshPhongMaterial({ color: 0x111111 }),
-                    new THREE.MeshPhongMaterial({ map: loader.load(name + EXT, undefined, undefined, () => console.log("Missing:", name)) }), 
-                    new THREE.MeshPhongMaterial({ color: isLast ? 0x050505 : 0xf8f8f8 }) // Mặt sau
+                    new THREE.MeshPhongMaterial({ map: frontTex }), // Mặt trước
+                    new THREE.MeshPhongMaterial({ map: backTex, color: backTex ? 0xffffff : 0x050505 }) // Mặt sau
                 ];
 
-                const pageMesh = new THREE.Mesh(geometry, materials);
-                // Giới hạn độ dày gáy sách tối đa 5 lớp trang
-                const zOffset = i < 5 ? i * 0.08 : 5 * 0.08;
-                pageMesh.position.z = -zOffset;
-                pageMesh.visible = (i < 3); // Ẩn bớt để mượt máy
+                const page = new THREE.Mesh(geometry, materials);
+                // Giới hạn độ dày gáy sách hiển thị (logic trang ảo)
+                page.position.z = - (meshPages.length < 6 ? meshPages.length * 0.1 : 6 * 0.1);
                 
-                meshPages.push(pageMesh);
-                bookGroup.add(pageMesh);
-            });
+                bookGroup.add(page);
+                meshPages.push(page);
+            }
 
-            bookGroup.position.x = -W/2; // Căn giữa bìa 1
+            bookGroup.position.x = -W/2;
             const controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.minPolarAngle = controls.maxPolarAngle = Math.PI / 2; // Khóa xoay dọc
-
-            window.addEventListener('resize', onResize);
+            controls.minPolarAngle = controls.maxPolarAngle = Math.PI / 2;
+            
             updateUI();
             animate();
         }
 
         function flip(direction) {
-            if (direction === 'next' && currentIndex < ALL_FILE_NAMES.length - 1) {
-                new TWEEN.Tween(meshPages[currentIndex].rotation).to({ y: -Math.PI + 0.04 }, 900).easing(TWEEN.Easing.Quartic.InOut).start();
+            if (direction === 'next' && currentIndex < meshPages.length - 1) {
+                new TWEEN.Tween(meshPages[currentIndex].rotation).to({ y: -Math.PI + 0.03 }, 1000).easing(TWEEN.Easing.Quartic.InOut).start();
                 currentIndex++;
             } else if (direction === 'prev' && currentIndex > 0) {
                 currentIndex--;
-                new TWEEN.Tween(meshPages[currentIndex].rotation).to({ y: 0 }, 900).easing(TWEEN.Easing.Quartic.InOut).start();
+                new TWEEN.Tween(meshPages[currentIndex].rotation).to({ y: 0 }, 1000).easing(TWEEN.Easing.Quartic.InOut).start();
             }
-            
-            // Cập nhật vị trí gáy (Mở ra thì nằm giữa, đóng lại thì bìa nằm giữa)
-            new TWEEN.Tween(bookGroup.position).to({ x: currentIndex === 0 ? -W/2 : 0 }, 700).start();
-            
-            // Cập nhật hiển thị trang lân cận để tối ưu
-            meshPages.forEach((p, idx) => p.visible = (idx >= currentIndex - 1 && idx <= currentIndex + 1));
+            new TWEEN.Tween(bookGroup.position).to({ x: currentIndex === 0 ? -W/2 : 0 }, 800).start();
             updateUI();
         }
 
         function updateUI() {
             document.getElementById('prevBtn').disabled = (currentIndex === 0);
-            document.getElementById('nextBtn').disabled = (currentIndex === ALL_FILE_NAMES.length - 1);
-            document.getElementById('page-info').innerText = `Page ${currentIndex + 1} / ${ALL_FILE_NAMES.length}`;
-        }
-
-        function onResize() {
-            const container = document.getElementById('canvas-container');
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
+            document.getElementById('nextBtn').disabled = (currentIndex === meshPages.length - 1);
+            document.getElementById('page-info').innerText = `Sheet ${currentIndex + 1} / ${meshPages.length}`;
         }
 
         function animate() {
@@ -144,14 +131,6 @@
 
         document.getElementById('nextBtn').onclick = () => flip('next');
         document.getElementById('prevBtn').onclick = () => flip('prev');
-        
-        // Mouse Follower Effect
-        const cursor = document.getElementById('cursor-follower');
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-        });
-
         init();
     </script>
 </body>
