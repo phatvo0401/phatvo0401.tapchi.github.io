@@ -16,138 +16,98 @@
             cursor: none !important; 
         }
 
-        /* --- LOADING SCREEN --- */
-        #loader { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #050a09; z-index: 10000; display: flex; 
-            flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s ease; 
-        }
-        #loader.hidden { opacity: 0; pointer-events: none; visibility: hidden; }
-        .loader-bar-container { width: 150px; height: 2px; background: rgba(255, 255, 255, 0.05); position: relative; overflow: hidden; border-radius: 2px; }
-        #loader-progress { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: linear-gradient(90deg, var(--miku), var(--violet)); transition: width 0.2s ease; }
-        .loader-percentage { font-family: monospace; font-size: 5rem; font-weight: 900; color: var(--miku); opacity: 0.3; position: absolute; bottom: 5%; right: 5%; line-height: 1; }
-
         /* --- CURSOR --- */
         #cursor-follower { width: 20px; height: 20px; border: 2px solid var(--miku); border-radius: 50%; position: fixed; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); background: linear-gradient(45deg, rgba(57, 197, 187, 0.2), rgba(139, 92, 246, 0.2)); transition: transform 0.08s ease-out; }
 
-        /* --- FLIPBOOK ENGINE --- */
+        /* --- LOADER --- */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050a09; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        #loader.hidden { opacity: 0; pointer-events: none; visibility: hidden; }
+        .loader-bar-container { width: 150px; height: 2px; background: rgba(255, 255, 255, 0.05); position: relative; overflow: hidden; border-radius: 2px; }
+        #loader-progress { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: linear-gradient(90deg, var(--miku), var(--violet)); transition: width 0.2s ease; }
+
+        /* --- FLIPBOOK --- */
         .book-wrapper { display: flex; justify-content: center; align-items: center; padding: 20px 0; perspective: 2500px; }
         .book { position: relative; width: 420px; height: 580px; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; }
         .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1), z-index 0.1s step-end; }
         .front, .back { position: absolute; width: 100%; height: 100%; top: 0; left: 0; backface-visibility: hidden; background-color: #111; box-shadow: inset 0 0 80px rgba(0,0,0,0.6); overflow: hidden; }
         .back { transform: rotateY(180deg); z-index: 1; }
-        
-        /* Lớp màu trắng cho trang nội dung đặc biệt */
         .blank-page { background-color: #ffffff !important; box-shadow: none !important; }
-
         img { width: 101%; height: 101%; object-fit: cover; pointer-events: none; display: block; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
         .flipped { transform: rotateY(-180deg); }
-        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        .reveal.active { opacity: 1; transform: translateY(0); }
 
-        /* --- UI COMPONENTS --- */
-        .nav-link { transition: all 0.3s ease; padding: 6px 20px; border-radius: 9999px; border: 1px solid rgba(57, 197, 187, 0.6); color: #ffffff; background: rgba(57, 197, 187, 0.15); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: none !important; }
-        .nav-link:hover { color: white !important; border-color: var(--violet) !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+        /* --- UI & BUTTONS --- */
         .btn-mag { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--miku); padding: 12px 20px; border-radius: 8px; font-size: 9px; font-weight: 900; letter-spacing: 1.5px; transition: 0.3s; cursor: none !important; text-transform: uppercase; }
         .btn-mag:hover { border-color: var(--violet); color: white; box-shadow: 0 0 15px var(--violet); }
         .social-link { transition: all 0.3s ease; color: #94a3b8; cursor: none !important; }
-        .social-link:hover { color: var(--miku); text-shadow: 0 0 12px var(--miku); transform: translateY(-2px); }
+        .social-link:hover { color: var(--miku); text-shadow: 0 0 12px var(--miku); }
+        
+        .reveal { opacity: 0; transform: translateY(20px); transition: 0.8s; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
     </style>
 </head>
 <body>
     <div id="cursor-follower"></div>
 
     <div id="loader">
-        <div class="flex flex-col items-center">
-            <div class="flex items-center mb-4" style="font-size: 18px; letter-spacing: -0.05em;">
-                <span style="font-weight: 900; color: #39c5bb; margin-right: 6px; text-transform: uppercase;">VTP</span>
-                <span style="font-weight: 300; color: white; opacity: 0.9;">Editorial</span>
-            </div>
-            <div class="loader-bar-container"><div id="loader-progress"></div></div>
-        </div>
-        <div id="loader-num" class="loader-percentage">00</div>
+        <div class="loader-bar-container"><div id="loader-progress"></div></div>
     </div>
 
-    <nav class="fixed w-full z-50 py-3 px-4 md:px-10 flex justify-between items-center bg-[#050a09]/70 backdrop-blur-xl border-b border-white/5">
-        <div class="flex flex-col flex-shrink-0 mr-6">
-            <div class="text-md md:text-lg flex items-center tracking-tighter">
-                <span class="font-black text-[#39c5bb] mr-1.5 uppercase">VTP</span>
-                <span class="font-light text-white opacity-90">Editorial</span>
-            </div>
-            <div class="flex flex-col space-y-0.5 mt-1">
-                <div class="items-center space-x-1.5 hidden md:flex">
-                    <div class="relative flex h-1.5 w-1.5">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#39c5bb] opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#39c5bb]"></span>
-                    </div>
-                    <span class="text-[8px] font-bold uppercase tracking-widest text-gray-400">Available</span>
-                </div>
-                <span id="digital-clock" class="text-[8px] font-mono text-gray-500 tracking-wider">00:00:00 AM</span>
-            </div>
+    <nav class="fixed w-full z-50 py-3 px-10 flex justify-between items-center bg-[#050a09]/70 backdrop-blur-xl border-b border-white/5">
+        <div class="flex items-center tracking-tighter">
+            <span class="font-black text-[#39c5bb] mr-1.5 uppercase">VTP</span>
+            <span class="font-light text-white opacity-90">Editorial</span>
         </div>
-        <a href="https://phatvo0401.github.io/#home" class="nav-link">Back to home</a>
+        <a href="https://phatvo0401.github.io/#home" class="px-5 py-1.5 rounded-full border border-[#39c5bb]/60 text-[10px] font-bold uppercase tracking-widest hover:bg-[#39c5bb]/20">Back to home</a>
     </nav>
 
-    <main class="flex flex-col items-center">
-        <header class="pt-32 pb-6 text-center reveal">
-            <h1 class="text-5xl md:text-7xl font-black mb-2 uppercase leading-tight tracking-tighter">
-                EDITORIAL <span class="bg-gradient-to-r from-[#39c5bb] to-[#8b5cf6] bg-clip-text text-transparent pr-2">VTP</span>
-            </h1>
-            <p id="page-num" class="text-white/50 font-medium tracking-[0.5em] uppercase text-[9px]">Sheet 1 / 53</p>
+    <main class="flex flex-col items-center pt-32">
+        <header class="text-center mb-6 reveal">
+            <h1 class="text-6xl font-black mb-2 uppercase tracking-tighter">EDITORIAL <span class="bg-gradient-to-r from-[#39c5bb] to-[#8b5cf6] bg-clip-text text-transparent">VTP</span></h1>
+            <p id="page-num" class="text-white/40 font-bold tracking-[0.4em] uppercase text-[9px]">Sheet 1 / --</p>
         </header>
 
         <div class="book-wrapper reveal">
             <div id="book" class="book"></div>
         </div>
 
-        <div class="flex flex-wrap justify-center gap-3 mt-4 mb-16 reveal">
+        <div class="flex flex-wrap justify-center gap-3 mt-8 mb-20 reveal">
             <button id="firstBtn" class="btn-mag">FIRST</button>
             <button id="prevBtn" class="btn-mag">PREV</button>
             <button id="nextBtn" class="btn-mag">NEXT</button>
             <button id="lastBtn" class="btn-mag">LAST</button>
         </div>
+
+        <footer class="w-full py-20 text-center border-t border-white/5 reveal">
+            <h3 class="text-xl font-black mb-8 bg-gradient-to-r from-[#39c5bb] to-[#8b5cf6] bg-clip-text text-transparent italic uppercase tracking-widest">Let's work together</h3>
+            <p class="text-lg font-bold text-white mb-2">phatvo.0401@gmail.com</p>
+            <p class="text-gray-500 text-[10px] uppercase tracking-widest mb-10">038 477 2414 | CỦ CHI, TP. HỒ CHÍ MINH</p>
+            
+            <div class="flex justify-center gap-12 mb-16 text-[10px] font-bold">
+                <a href="https://www.facebook.com/phatvo.0401/" target="_blank" class="social-link tracking-widest uppercase">FACEBOOK</a>
+                <a href="https://www.instagram.com/phatvo.0401/" target="_blank" class="social-link tracking-widest uppercase">INSTAGRAM</a>
+                <a href="https://www.behance.net/phtthnh42" target="_blank" class="social-link tracking-widest uppercase">BEHANCE</a>
+            </div>
+            <p class="text-slate-700 text-[8px] uppercase tracking-[0.5em]">© 2025 VTP Design — All Rights Reserved</p>
+        </footer>
     </main>
 
     <script>
-        // Đồng hồ & Con trỏ
-        function updateClock() { 
-            const now = new Date();
-            document.getElementById('digital-clock').innerText = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }).toUpperCase(); 
-        }
-        setInterval(updateClock, 1000); updateClock();
-
+        // Cursor
         const cursor = document.getElementById('cursor-follower');
-        document.addEventListener('mousemove', (e) => { 
-            cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; 
-        });
+        document.addEventListener('mousemove', (e) => { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; });
 
         // Loader
-        let p = 0; const li = setInterval(() => { 
-            p += 5; document.getElementById('loader-progress').style.width = p + '%'; 
-            document.getElementById('loader-num').innerText = p.toString().padStart(2, '0'); 
-            if (p >= 100) { clearInterval(li); setTimeout(() => { document.getElementById('loader').classList.add('hidden'); }, 500); } 
-        }, 50);
+        let p = 0; const li = setInterval(() => { p += 5; document.getElementById('loader-progress').style.width = p + '%'; if (p >= 100) { clearInterval(li); setTimeout(() => { document.getElementById('loader').classList.add('hidden'); }, 500); } }, 40);
 
-        // Hiệu ứng Reveal
+        // Observer
         const obs = new IntersectionObserver((es) => { es.forEach(e => { if (e.isIntersecting) e.target.classList.add('active'); }); }, { threshold: 0.1 });
         document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-        // --- ENGINE TẠP CHÍ ---
+        // Flipbook Logic
         const EXT = ".JPG.jpg";
-        const ASSETS = [];
-        
-        // Cấu trúc: 
-        // Index 0: Bìa trước (00102)
-        // Index 1: "BLANK" (Tín hiệu để JS tạo trang trắng sau bìa)
-        ASSETS.push("Tạp Chí_00102"); 
-        ASSETS.push("BLANK"); 
-
-        // Vòng lặp lấy từ 00001 đến 00101
-        for (let i = 1; i <= 101; i++) {
-            ASSETS.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
-        }
-        ASSETS.push("Tạp Chí_00103"); // Bìa sau
+        const ASSETS = ["Tạp Chí_00102", "BLANK"]; // Bìa -> Trang trắng tự động
+        for (let i = 1; i <= 101; i++) ASSETS.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
+        ASSETS.push("Tạp Chí_00103");
 
         const book = document.getElementById('book');
         const sheets = [];
@@ -161,61 +121,37 @@
                 const baseZ = Math.floor((ASSETS.length - i) / 2);
                 sheet.style.zIndex = baseZ;
                 sheet.dataset.baseZ = baseZ;
-                
-                // Mặt trước
+
                 const front = document.createElement('div');
-                front.className = 'front';
-                if (ASSETS[i] === "BLANK") {
-                    front.classList.add('blank-page');
-                } else {
-                    const imgF = new Image(); imgF.src = ASSETS[i] + EXT;
-                    front.appendChild(imgF);
-                }
-                
-                // Mặt sau
+                front.className = 'front' + (ASSETS[i] === "BLANK" ? " blank-page" : "");
+                if (ASSETS[i] !== "BLANK") { const imgF = new Image(); imgF.src = ASSETS[i] + EXT; front.appendChild(imgF); }
+
                 const back = document.createElement('div');
-                back.className = 'back';
-                if (i + 1 < ASSETS.length) {
-                    if (ASSETS[i+1] === "BLANK") {
-                        back.classList.add('blank-page');
-                    } else {
-                        const imgB = new Image(); imgB.src = ASSETS[i+1] + EXT;
-                        back.appendChild(imgB);
-                    }
-                }
-                
-                sheet.appendChild(front);
-                sheet.appendChild(back);
-                book.appendChild(sheet);
-                sheets.push(sheet);
+                back.className = 'back' + (i+1 < ASSETS.length && ASSETS[i+1] === "BLANK" ? " blank-page" : "");
+                if (i+1 < ASSETS.length && ASSETS[i+1] !== "BLANK") { const imgB = new Image(); imgB.src = ASSETS[i+1] + EXT; back.appendChild(imgB); }
+
+                sheet.appendChild(front); sheet.appendChild(back);
+                book.appendChild(sheet); sheets.push(sheet);
             }
+            updateUINum();
         }
 
-        function updateBookPosition() {
-            book.style.transform = (currentIndex === 0 || currentIndex === sheets.length) ? "translateX(0px)" : "translateX(50%)";
-        }
-
-        function updateUINum() { 
-            document.getElementById('page-num').innerText = `Sheet ${currentIndex + 1} / ${sheets.length}`; 
-        }
+        function updateBookPosition() { book.style.transform = (currentIndex === 0 || currentIndex === sheets.length) ? "translateX(0px)" : "translateX(50%)"; }
+        function updateUINum() { document.getElementById('page-num').innerText = `Sheet ${currentIndex + 1} / ${sheets.length}`; }
 
         function next() {
             if (currentIndex < sheets.length && !isAnimating) {
-                isAnimating = true;
-                const s = sheets[currentIndex];
-                s.classList.add('flipped');
-                setTimeout(() => { s.style.zIndex = currentIndex + 100; isAnimating = false; }, 400);
+                isAnimating = true; sheets[currentIndex].classList.add('flipped');
+                setTimeout(() => { sheets[currentIndex-1].style.zIndex = currentIndex + 100; isAnimating = false; }, 400);
                 currentIndex++; updateBookPosition(); updateUINum();
             }
         }
 
         function prev() {
             if (currentIndex > 0 && !isAnimating) {
-                isAnimating = true;
-                currentIndex--;
-                const s = sheets[currentIndex];
-                s.classList.remove('flipped');
-                setTimeout(() => { s.style.zIndex = s.dataset.baseZ; isAnimating = false; }, 400);
+                isAnimating = true; currentIndex--;
+                sheets[currentIndex].classList.remove('flipped');
+                setTimeout(() => { sheets[currentIndex].style.zIndex = sheets[currentIndex].dataset.baseZ; isAnimating = false; }, 400);
                 updateBookPosition(); updateUINum();
             }
         }
@@ -236,10 +172,19 @@
             setTimeout(() => { isAnimating = false; }, 400);
         }
 
+        // Event Listeners (Fix mất phím tắt)
         document.getElementById('nextBtn').onclick = next;
         document.getElementById('prevBtn').onclick = prev;
         document.getElementById('firstBtn').onclick = goToFirst;
         document.getElementById('lastBtn').onclick = goToLast;
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "ArrowRight") next();
+            if (e.key === "ArrowLeft") prev();
+            if (e.key === "Home") goToFirst();
+            if (e.key === "End") goToLast();
+        });
+
         createBook();
     </script>
 </body>
