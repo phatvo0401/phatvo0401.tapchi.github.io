@@ -3,24 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VTP Editorial | Pro 3D Magazine</title>
+    <title>VTP | 3D Magazine Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/20.0.0/tween.umd.js"></script>
     <style>
-        body { margin: 0; background-color: #050a09; overflow: hidden; }
-        #canvas-container { width: 100%; height: 100vh; }
-        .ui-controls { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 100; }
-        .btn-flip { background: rgba(57, 197, 187, 0.2); border: 1px solid #39c5bb; color: #39c5bb; padding: 12px 35px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-flip:hover:not(:disabled) { background: #39c5bb; color: white; box-shadow: 0 0 20px #39c5bb; }
-        .btn-flip:disabled { opacity: 0.2; cursor: not-allowed; }
+        :root { --miku: #39c5bb; --violet: #ff007f; --glass: rgba(255, 255, 255, 0.03); --border: rgba(57, 197, 187, 0.2); }
+        body { 
+            font-family: 'Lexend', sans-serif; background-color: #050a09; 
+            background-image: radial-gradient(at 0% 0%, rgba(255, 0, 127, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(255, 0, 127, 0.1) 0px, transparent 50%);
+            background-attachment: fixed; color: #e6f7f6; overflow-x: hidden; cursor: none !important; user-select: none; 
+        }
+        #cursor-follower { width: 20px; height: 20px; border: 2px solid var(--miku); border-radius: 50%; position: fixed; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); background: linear-gradient(45deg, rgba(57, 197, 187, 0.2), rgba(255, 0, 127, 0.2)); }
+        #magazine-view { width: 100%; height: 75vh; position: relative; }
+        .controls-ui { position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 10; }
+        .btn-mag { background: var(--glass); border: 1px solid var(--border); color: var(--miku); padding: 12px 24px; border-radius: 8px; font-size: 10px; font-weight: 900; letter-spacing: 2px; transition: 0.3s; }
+        .btn-mag:hover:not(:disabled) { border-color: var(--violet); color: white; box-shadow: 0 0 15px var(--violet); }
     </style>
 </head>
 <body>
-    <div class="ui-controls">
-        <button id="prevBtn" class="btn-flip">TRANG TRƯỚC</button>
-        <button id="nextBtn" class="btn-flip">TRANG TIẾP</button>
+    <div id="cursor-follower"></div>
+
+    <header class="pt-32 text-center px-4">
+        <h1 class="text-5xl font-black mb-2 uppercase italic tracking-tighter" style="background: linear-gradient(90deg, var(--miku), var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Editorial</h1>
+        <p id="status-log" class="text-white/30 font-medium tracking-[0.2em] uppercase text-[10px]">3D Double-Sided Rendering</p>
+    </header>
+
+    <div id="magazine-view">
+        <div class="controls-ui">
+            <button id="prevBtn" class="btn-mag">PREVIOUS</button>
+            <button id="nextBtn" class="btn-mag">NEXT PAGE</button>
+        </div>
     </div>
-    <div id="canvas-container"></div>
 
     <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }</script>
     <script type="module">
@@ -32,101 +46,97 @@
         const backName = "Tạp Chí_00103";
         const contentPages = [];
         for (let i = 1; i <= 101; i++) contentPages.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
-        const ALL_ASSETS = [frontName, ...contentPages, backName];
+        
+        // Thứ tự chuẩn: Bìa -> Nội dung -> Bìa sau
+        const ASSETS = [frontName, ...contentPages, backName];
 
         let scene, camera, renderer, bookGroup;
-        let meshPages = [];
+        let sheets = [];
         let currentIndex = 0;
         const W = 16, H = 22;
 
         function init() {
-            const container = document.getElementById('canvas-container');
+            const container = document.getElementById('magazine-view');
             scene = new THREE.Scene();
-            
             camera = new THREE.PerspectiveCamera(35, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(0, 0, 80);
+            camera.position.set(0, 0, 75);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
-            
-            // --- CẤU HÌNH MÀU SẮC CHUẨN ---
-            renderer.outputColorSpace = THREE.SRGBColorSpace; // Giúp màu không bị bạc
-            renderer.toneMapping = THREE.NoToneMapping; 
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
             container.appendChild(renderer.domElement);
 
-            // Ánh sáng mạnh và đều để giữ màu gốc
-            const ambientLight = new THREE.AmbientLight(0xffffff, 4); 
-            scene.add(ambientLight);
-
+            scene.add(new THREE.AmbientLight(0xffffff, 4));
             bookGroup = new THREE.Group();
             scene.add(bookGroup);
 
             const loader = new THREE.TextureLoader();
 
-            for (let i = 0; i < ALL_ASSETS.length; i += 2) {
-                const geometry = new THREE.BoxGeometry(W, H, 0.06);
+            // Vòng lặp tạo "Tờ giấy" (1 tờ = 2 ảnh)
+            for (let i = 0; i < ASSETS.length; i += 2) {
+                const geometry = new THREE.BoxGeometry(W, H, 0.015);
                 geometry.translate(W/2, 0, 0);
 
-                // Load mặt trước
-                const texFront = loader.load(ALL_ASSETS[i] + EXT);
-                texFront.colorSpace = THREE.SRGBColorSpace;
+                // Ảnh mặt phải (Trang lẻ)
+                const texRight = loader.load(ASSETS[i] + EXT);
+                texRight.colorSpace = THREE.SRGBColorSpace;
 
-                // Load mặt sau
-                let texBack = null;
-                if (i + 1 < ALL_ASSETS.length) {
-                    texBack = loader.load(ALL_ASSETS[i+1] + EXT);
-                    texBack.colorSpace = THREE.SRGBColorSpace;
-                    // SỬA LỖI LẬT NGƯỢC:
-                    texBack.center.set(0.5, 0.5);
-                    texBack.repeat.set(-1, 1); 
+                // Ảnh mặt trái (Trang chẵn) - Xử lý lật ngược triệt để
+                let texLeft = null;
+                if (i + 1 < ASSETS.length) {
+                    texLeft = loader.load(ASSETS[i+1] + EXT);
+                    texLeft.colorSpace = THREE.SRGBColorSpace;
+                    texLeft.center.set(0.5, 0.5);
+                    texLeft.repeat.set(-1, 1); // Lật ngang ảnh
+                    texLeft.offset.set(0, 0); 
                 }
 
                 const materials = [
-                    new THREE.MeshBasicMaterial({ color: 0x111111 }), // cạnh
-                    new THREE.MeshBasicMaterial({ color: 0x111111 }),
-                    new THREE.MeshBasicMaterial({ color: 0x111111 }),
-                    new THREE.MeshBasicMaterial({ color: 0x111111 }),
-                    new THREE.MeshBasicMaterial({ map: texFront }), // Mặt lẻ (Phải)
-                    new THREE.MeshBasicMaterial({ map: texBack ? texBack : null, color: texBack ? 0xffffff : 0x000000 }) // Mặt chẵn (Trái)
+                    new THREE.MeshBasicMaterial({ color: 0x000000 }), // Cạnh
+                    new THREE.MeshBasicMaterial({ color: 0x000000 }),
+                    new THREE.MeshBasicMaterial({ color: 0x000000 }),
+                    new THREE.MeshBasicMaterial({ color: 0x000000 }),
+                    new THREE.MeshBasicMaterial({ map: texRight }), // Mặt trước (Phải)
+                    new THREE.MeshBasicMaterial({ map: texLeft, color: texLeft ? 0xffffff : 0x000000 }) // Mặt sau (Trái)
                 ];
 
-                const page = new THREE.Mesh(geometry, materials);
-                page.position.z = -(i * 0.03); // Xếp chồng trang
+                const sheet = new THREE.Mesh(geometry, materials);
+                // Độ dày gáy cực mỏng cho tạp chí
+                sheet.position.z = -(sheets.length * 0.02);
                 
-                bookGroup.add(page);
-                meshPages.push(page);
+                bookGroup.add(sheet);
+                sheets.push(sheet);
             }
 
             bookGroup.position.x = -W/2;
             const controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-            
-            animate();
+            controls.minPolarAngle = controls.maxPolarAngle = Math.PI / 2;
+
             updateUI();
+            animate();
         }
 
         function flip(direction) {
-            if (direction === 'next' && currentIndex < meshPages.length - 1) {
-                const page = meshPages[currentIndex];
-                // Lật trang và đẩy Z lên để không bị đè
-                new TWEEN.Tween(page.rotation).to({ y: -Math.PI + 0.01 }, 1200).easing(TWEEN.Easing.Quartic.InOut).start();
-                new TWEEN.Tween(page.position).to({ z: currentIndex * 0.03 + 0.1 }, 1200).start();
+            if (direction === 'next' && currentIndex < sheets.length - 1) {
+                const s = sheets[currentIndex];
+                // Lật và đẩy nhẹ Z để không bị Z-fighting (nhấp nháy hình)
+                new TWEEN.Tween(s.rotation).to({ y: -Math.PI + 0.02 }, 1000).easing(TWEEN.Easing.Quartic.InOut).start();
+                new TWEEN.Tween(s.position).to({ z: currentIndex * 0.02 + 0.1 }, 1000).start();
                 currentIndex++;
             } else if (direction === 'prev' && currentIndex > 0) {
                 currentIndex--;
-                const page = meshPages[currentIndex];
-                new TWEEN.Tween(page.rotation).to({ y: 0 }, 1200).easing(TWEEN.Easing.Quartic.InOut).start();
-                new TWEEN.Tween(page.position).to({ z: -(currentIndex * 0.03) }, 1200).start();
+                const s = sheets[currentIndex];
+                new TWEEN.Tween(s.rotation).to({ y: 0 }, 1000).easing(TWEEN.Easing.Quartic.InOut).start();
+                new TWEEN.Tween(s.position).to({ z: -(currentIndex * 0.02) }, 1000).start();
             }
-
-            // Dịch chuyển tâm quyển sách
-            new TWEEN.Tween(bookGroup.position).to({ x: currentIndex === 0 ? -W/2 : 0 }, 1000).easing(TWEEN.Easing.Cubic.InOut).start();
+            new TWEEN.Tween(bookGroup.position).to({ x: currentIndex === 0 ? -W/2 : 0 }, 800).start();
             updateUI();
         }
 
         function updateUI() {
             document.getElementById('prevBtn').disabled = (currentIndex === 0);
-            document.getElementById('nextBtn').disabled = (currentIndex === meshPages.length - 1);
+            document.getElementById('nextBtn').disabled = (currentIndex === sheets.length - 1);
         }
 
         function animate() {
@@ -137,6 +147,12 @@
 
         document.getElementById('nextBtn').onclick = () => flip('next');
         document.getElementById('prevBtn').onclick = () => flip('prev');
+
+        const cursor = document.getElementById('cursor-follower');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
+        });
+
         init();
     </script>
 </body>
