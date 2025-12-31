@@ -51,28 +51,9 @@
         img { width: 101%; height: 101%; object-fit: cover; pointer-events: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
         /* Trạng thái bình thường: Viền xanh Miku, chữ trắng */
-.nav-link { 
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-    padding: 6px 20px; 
-    border-radius: 9999px; 
-    border: 1px solid rgba(57, 197, 187, 0.6); /* Viền xanh Miku */
-    color: #ffffff; /* Chữ trắng */
-    background: rgba(57, 197, 187, 0.1); 
-    font-size: 10px; 
-    font-weight: 800; 
-    letter-spacing: 2px; 
-    text-transform: uppercase; 
-    cursor: none !important; 
-}
+.nav-link { transition: all 0.3s ease; padding: 6px 20px; border-radius: 9999px; border: 1px solid rgba(57, 197, 187, 0.6); color: #ffffff; background: rgba(57, 197, 187, 0.15); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+        .nav-link:hover { color: white !important; border-color: var(--violet) !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
 
-/* Khi di chuột vào: Viền tím, chữ trắng, phát sáng tím */
-.nav-link:hover { 
-    border-color: #8b5cf6; /* Đổi sang màu Tím Violet */
-    color: #ffffff; /* Giữ chữ trắng */
-    background: rgba(139, 92, 246, 0.15); /* Nền tím nhạt */
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); /* Phát sáng Tím */
-    transform: translateY(-2px);
-}
         .btn-mag { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--miku); padding: 12px 20px; border-radius: 8px; font-size: 9px; font-weight: 900; letter-spacing: 1.5px; transition: 0.3s; cursor: none !important; text-transform: uppercase; }
         .btn-mag:hover { border-color: var(--violet); color: white; box-shadow: 0 0 15px var(--violet); }
         .social-link { 
@@ -297,5 +278,6 @@
     </script>
 </body>
 </html>
+
 
 
