@@ -14,19 +14,27 @@
             background-image: radial-gradient(at 0% 0%, rgba(255, 0, 127, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(255, 0, 127, 0.1) 0px, transparent 50%);
             background-attachment: fixed; color: #e6f7f6; overflow-x: hidden; cursor: none !important; user-select: none; 
         }
-        #cursor-follower { width: 20px; height: 20px; border: 2px solid var(--miku); border-radius: 50%; position: fixed; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); background: linear-gradient(45deg, rgba(57, 197, 187, 0.2), rgba(255, 0, 127, 0.2)); }
+        #cursor-follower { width: 20px; height: 20px; border: 2px solid var(--miku); border-radius: 50%; position: fixed; pointer-events: none; z-index: 99999; transform: translate(-50%, -50%); background: linear-gradient(45deg, rgba(57, 197, 187, 0.2), rgba(255, 0, 127, 0.2)); transition: transform 0.1s ease; }
+        .nav-link { transition: 0.3s; padding: 6px 20px; border-radius: 9999px; border: 1px solid rgba(57, 197, 187, 0.6); color: #ffffff; background: rgba(57, 197, 187, 0.15); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+        .nav-link:hover { border-color: var(--violet); box-shadow: 0 0 20px rgba(255, 0, 127, 0.3); }
         #magazine-view { width: 100%; height: 75vh; position: relative; }
         .controls-ui { position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 10; }
-        .btn-mag { background: var(--glass); border: 1px solid var(--border); color: var(--miku); padding: 12px 24px; border-radius: 8px; font-size: 10px; font-weight: 900; letter-spacing: 2px; transition: 0.3s; }
-        .btn-mag:hover:not(:disabled) { border-color: var(--violet); color: white; box-shadow: 0 0 15px var(--violet); }
+        .btn-mag { background: var(--glass); border: 1px solid var(--border); color: var(--miku); padding: 12px 24px; border-radius: 8px; font-size: 10px; font-weight: 900; letter-spacing: 2px; backdrop-filter: blur(10px); transition: 0.3s; }
+        .btn-mag:hover:not(:disabled) { border-color: var(--violet); color: white; box-shadow: 0 0 15px var(--violet); transform: translateY(-2px); }
+        .btn-mag:disabled { opacity: 0.15; transform: none; }
     </style>
 </head>
 <body>
     <div id="cursor-follower"></div>
 
+    <nav class="fixed w-full z-50 py-3 px-10 flex justify-between items-center bg-[#050a09]/70 backdrop-blur-xl border-b border-white/5">
+        <div class="flex items-center tracking-tighter"><span class="font-black text-[#39c5bb] mr-1.5 uppercase">VTP</span><span class="font-light text-white opacity-90">Editorial</span></div>
+        <a href="index.html" class="nav-link">Back to Gallery</a>
+    </nav>
+
     <header class="pt-32 text-center px-4">
-        <h1 class="text-5xl font-black mb-2 uppercase italic" style="background: linear-gradient(90deg, var(--miku), var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Editorial</h1>
-        <p id="error-log" class="text-white/30 font-medium tracking-[0.2em] uppercase text-[10px]">Đang kiểm tra hình ảnh...</p>
+        <h1 class="text-5xl md:text-7xl font-black mb-2 uppercase tracking-tighter italic" style="background: linear-gradient(90deg, var(--miku), var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Editorial</h1>
+        <p id="page-status" class="text-white/30 font-medium tracking-[0.4em] uppercase text-[8px]">Đang nạp dữ liệu ảnh...</p>
     </header>
 
     <div id="magazine-view">
@@ -41,16 +49,28 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // TÊN FILE GỐC (KHÔNG CÓ ĐUÔI)
-        const frontName = "Tạp Chí_00102";
-        const backName = "Tạp Chí_00103";
-        const contentPages = [];
-        for (let i = 1; i <= 101; i++) contentPages.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
-        const ALL_NAMES = [frontName, ...contentPages, backName];
+        // ==========================================
+        // CẤU HÌNH ĐƯỜNG DẪN ĐÃ FIX LỖI "NHÂN ĐÔI ĐUÔI FILE"
+        // ==========================================
+        const PATH = ""; // Ảnh nằm cùng cấp với file html
+        const EXT = ".JPG.jpg"; // Đuôi file kép như bạn mô tả trên GitHub
 
-        let scene, camera, renderer, bookGroup;
+        const frontCoverName = "Tạp Chí_00102";
+        const backCoverName = "Tạp Chí_00103";
+        const contentPages = [];
+        for (let i = 1; i <= 101; i++) {
+            contentPages.push(`Tạp Chí_${String(i).padStart(5, '0')}`);
+        }
+        
+        // Mảng chứa toàn bộ tên file theo đúng thứ tự lật
+        const ALL_NAMES = [frontCoverName, ...contentPages, backCoverName];
+
+        let scene, camera, renderer, controls, bookGroup;
         let pages = [];
         let currentPage = 0;
+        const totalLogicalPages = ALL_NAMES.length;
+        const pageWidth = 16;
+        const pageHeight = 22;
 
         function init() {
             const container = document.getElementById('magazine-view');
@@ -60,82 +80,116 @@
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
             container.appendChild(renderer.domElement);
 
             scene.add(new THREE.AmbientLight(0xffffff, 2.5));
+            const light = new THREE.DirectionalLight(0xffffff, 0.8); light.position.set(10, 10, 15); scene.add(light);
+
             bookGroup = new THREE.Group();
             scene.add(bookGroup);
 
             const loader = new THREE.TextureLoader();
+            
+            ALL_NAMES.forEach((fileName, i) => {
+                const geometry = new THREE.BoxGeometry(pageWidth, pageHeight, 0.05);
+                geometry.translate(pageWidth/2, 0, 0); // Trục xoay gáy
 
-            ALL_NAMES.forEach((name, i) => {
-                const geometry = new THREE.BoxGeometry(16, 22, 0.05);
-                geometry.translate(8, 0, 0);
-
-                // THỬ NẠP ẢNH VỚI CẢ .JPG VÀ .jpg
-                const fullPath = name + ".JPG"; 
+                const isLast = (i === totalLogicalPages - 1);
+                
+                // Nạp Texture với đuôi file lỗi của Windows (.JPG.jpg)
                 const texture = loader.load(
-                    fullPath,
-                    () => { if(i===0) document.getElementById('error-log').innerText = "Đã nhận diện file thành công!"; },
+                    PATH + fileName + EXT,
+                    () => { if(i === 0) console.log("Đã nạp bìa thành công"); },
                     undefined,
-                    () => {
-                        // Nếu .JPG lỗi, thử nạp lại bằng .jpg viết thường
-                        texture.image = loader.load(name + ".jpg").image;
-                        document.getElementById('error-log').innerText = "CẢNH BÁO: Kiểm tra file " + fullPath;
+                    (err) => {
+                        console.error("Không tìm thấy:", fileName + EXT);
+                        document.getElementById('page-status').innerText = "LỖI FILE: " + fileName + EXT;
                     }
                 );
 
                 const materials = [
+                    new THREE.MeshPhongMaterial({ color: 0x111111 }), // Cạnh
                     new THREE.MeshPhongMaterial({ color: 0x111111 }),
                     new THREE.MeshPhongMaterial({ color: 0x111111 }),
                     new THREE.MeshPhongMaterial({ color: 0x111111 }),
-                    new THREE.MeshPhongMaterial({ color: 0x111111 }),
-                    new THREE.MeshPhongMaterial({ map: texture }), 
-                    new THREE.MeshPhongMaterial({ color: (i === ALL_NAMES.length-1) ? 0x050505 : 0xffffff })
+                    new THREE.MeshPhongMaterial({ map: texture }), // Mặt trước (Ảnh JPG)
+                    new THREE.MeshPhongMaterial({ color: isLast ? 0x050505 : 0xfcfcfc }) // Mặt sau cố định
                 ];
-
+                
                 const page = new THREE.Mesh(geometry, materials);
-                page.position.z = - (i < 6 ? i * 0.08 : 6 * 0.08);
-                page.visible = (i < 3);
+                
+                // Giới hạn độ dày gáy sách hiển thị (tối đa 6 lớp trang chồng lên nhau)
+                const zPos = i < 6 ? i * 0.08 : 6 * 0.08;
+                page.position.z = -zPos; 
+                
+                page.visible = (i < 3); // Tối ưu hiệu năng
                 pages.push(page);
                 bookGroup.add(page);
             });
 
-            bookGroup.position.x = -8;
-            new OrbitControls(camera, renderer.domElement);
+            bookGroup.position.x = -pageWidth / 2;
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.minPolarAngle = controls.maxPolarAngle = Math.PI / 2; // Chỉ cho xoay ngang
+            
+            updateUI();
             animate();
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            TWEEN.update();
-            renderer.render(scene, camera);
+        function updateVisibility() {
+            pages.forEach((page, i) => {
+                // Chỉ vẽ trang đang lật, trang trước và trang sau để mượt máy
+                page.visible = (i >= currentPage - 1 && i <= currentPage + 1);
+            });
+        }
+
+        function updateLayout() {
+            // Hiệu ứng dịch chuyển quyển sách khi mở/đóng
+            let targetX = (currentPage === 0) ? -pageWidth / 2 : 0;
+            new TWEEN.Tween(bookGroup.position).to({ x: targetX }, 700).easing(TWEEN.Easing.Cubic.InOut).start();
+            updateUI();
         }
 
         window.nextPage = () => {
-            if (currentPage < ALL_NAMES.length - 1) {
-                new TWEEN.Tween(pages[currentPage].rotation).to({ y: -Math.PI + 0.04 }, 800).easing(TWEEN.Easing.Quartic.InOut).start();
+            if (currentPage < totalLogicalPages - 1) {
+                new TWEEN.Tween(pages[currentPage].rotation).to({ y: -Math.PI + 0.04 }, 900).easing(TWEEN.Easing.Quartic.InOut).start();
                 currentPage++;
-                pages.forEach((p, i) => p.visible = (i >= currentPage - 1 && i <= currentPage + 1));
-                new TWEEN.Tween(bookGroup.position).to({ x: (currentPage === 0 ? -8 : 0) }, 600).start();
+                updateVisibility();
+                updateLayout();
             }
         };
 
         window.prevPage = () => {
             if (currentPage > 0) {
                 currentPage--;
-                new TWEEN.Tween(pages[currentPage].rotation).to({ y: 0 }, 800).easing(TWEEN.Easing.Quartic.InOut).start();
-                pages.forEach((p, i) => p.visible = (i >= currentPage - 1 && i <= currentPage + 1));
-                new TWEEN.Tween(bookGroup.position).to({ x: (currentPage === 0 ? -8 : 0) }, 600).start();
+                new TWEEN.Tween(pages[currentPage].rotation).to({ y: 0 }, 900).easing(TWEEN.Easing.Quartic.InOut).start();
+                updateVisibility();
+                updateLayout();
             }
         };
+
+        function updateUI() {
+            document.getElementById('prevBtn').disabled = (currentPage === 0);
+            document.getElementById('nextBtn').disabled = (currentPage === totalLogicalPages - 1);
+            document.getElementById('page-status').innerText = `PAGE ${currentPage + 1} OF ${totalLogicalPages}`;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            TWEEN.update();
+            controls.update();
+            renderer.render(scene, camera);
+        }
 
         document.getElementById('nextBtn').onclick = window.nextPage;
         document.getElementById('prevBtn').onclick = window.prevPage;
 
         const cursor = document.getElementById('cursor-follower');
         document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
         });
 
         init();
